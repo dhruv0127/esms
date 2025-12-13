@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Form, Input, InputNumber, Row, Col } from 'antd';
+import { Form, InputNumber, Row, Col } from 'antd';
 
 import { DeleteOutlined } from '@ant-design/icons';
-import { useMoney, useDate } from '@/settings';
+import { useMoney } from '@/settings';
 import calculate from '@/utils/calculate';
+import SelectInventoryItem from '@/components/SelectInventoryItem';
 
 export default function ItemRow({ field, remove, current = null }) {
+  const form = Form.useFormInstance();
   const [totalState, setTotal] = useState(undefined);
   const [price, setPrice] = useState(0);
   const [quantity, setQuantity] = useState(0);
@@ -16,6 +18,32 @@ export default function ItemRow({ field, remove, current = null }) {
   };
   const updatePrice = (value) => {
     setPrice(value);
+  };
+
+  const handleItemSelect = (selectedItem) => {
+    if (selectedItem && selectedItem.unitPrice && selectedItem.product) {
+      const newPrice = selectedItem.unitPrice;
+      setPrice(newPrice);
+
+      // Update both itemName (product name) and price in the form
+      const items = form.getFieldValue('items') || [];
+      items[field.name] = {
+        ...items[field.name],
+        itemName: selectedItem.product, // Store the product name for backend
+        price: newPrice,
+      };
+      form.setFieldsValue({ items });
+    } else if (!selectedItem) {
+      // Clear price when item is cleared
+      setPrice(0);
+      const items = form.getFieldValue('items') || [];
+      items[field.name] = {
+        ...items[field.name],
+        itemName: '',
+        price: 0,
+      };
+      form.setFieldsValue({ items });
+    }
   };
 
   useEffect(() => {
@@ -53,26 +81,17 @@ export default function ItemRow({ field, remove, current = null }) {
 
   return (
     <Row gutter={[12, 12]} style={{ position: 'relative' }}>
-      <Col className="gutter-row" span={5}>
+      <Col className="gutter-row" span={12}>
         <Form.Item
           name={[field.name, 'itemName']}
           rules={[
             {
               required: true,
-              message: 'Missing itemName name',
-            },
-            {
-              pattern: /^(?!\s*$)[\s\S]+$/, // Regular expression to allow spaces, alphanumeric, and special characters, but not just spaces
-              message: 'Item Name must contain alphanumeric or special characters',
+              message: 'Please select an item',
             },
           ]}
         >
-          <Input placeholder="Item Name" />
-        </Form.Item>
-      </Col>
-      <Col className="gutter-row" span={7}>
-        <Form.Item name={[field.name, 'description']}>
-          <Input placeholder="description Name" />
+          <SelectInventoryItem onChange={handleItemSelect} />
         </Form.Item>
       </Col>
       <Col className="gutter-row" span={3}>
