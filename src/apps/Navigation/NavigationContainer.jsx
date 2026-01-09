@@ -27,6 +27,8 @@ import {
   WalletOutlined,
   ReconciliationOutlined,
   AppstoreOutlined,
+  DollarOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -61,6 +63,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       label: <Link to={'/customer'}>{translate('customers')}</Link>,
     },
     {
+      key: 'supplier',
+      icon: <TeamOutlined />,
+      label: <Link to={'/supplier'}>{translate('suppliers')}</Link>,
+    },
+    {
       key: 'inventory',
       icon: <AppstoreOutlined />,
       label: <Link to={'/inventory'}>{translate('inventory')}</Link>,
@@ -80,6 +87,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'payment',
       icon: <CreditCardOutlined />,
       label: <Link to={'/payment'}>{translate('payments')}</Link>,
+    },
+    {
+      key: 'cash',
+      icon: <DollarOutlined />,
+      label: <Link to={'/cash'}>{translate('cash_management')}</Link>,
     },
 
     {
