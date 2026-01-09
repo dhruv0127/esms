@@ -15,6 +15,14 @@ export const fields = {
     type: 'date',
     required: true,
   },
+  invoice: {
+    type: 'async',
+    entity: 'invoice',
+    displayLabels: ['number'],
+    searchFields: ['number'],
+    dataIndex: ['invoice', 'number'],
+    required: false,
+  },
   partyType: {
     type: 'select',
     options: [

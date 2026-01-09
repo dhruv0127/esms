@@ -450,6 +450,7 @@ const lang = {
   party_type: 'Party Type',
   type: 'Type',
   reference: 'Reference',
+  invoice: 'Invoice',
   products: 'Products',
   products_category: 'Products Category',
   expenses: 'Expenses',
