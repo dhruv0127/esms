@@ -23,6 +23,10 @@ const QuoteUpdate = lazy(() => import('@/pages/Quote/QuoteUpdate'));
 const Payment = lazy(() => import('@/pages/Payment/index'));
 const PaymentRead = lazy(() => import('@/pages/Payment/PaymentRead'));
 const PaymentUpdate = lazy(() => import('@/pages/Payment/PaymentUpdate'));
+const Purchase = lazy(() => import('@/pages/Purchase'));
+const PurchaseCreate = lazy(() => import('@/pages/Purchase/PurchaseCreate'));
+const PurchaseRead = lazy(() => import('@/pages/Purchase/PurchaseRead'));
+const PurchaseUpdate = lazy(() => import('@/pages/Purchase/PurchaseUpdate'));
 const CashTransaction = lazy(() => import('@/pages/CashTransaction'));
 
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
@@ -116,6 +120,22 @@ let routes = {
     {
       path: '/payment/update/:id',
       element: <PaymentUpdate />,
+    },
+    {
+      path: '/purchase',
+      element: <Purchase />,
+    },
+    {
+      path: '/purchase/create',
+      element: <PurchaseCreate />,
+    },
+    {
+      path: '/purchase/read/:id',
+      element: <PurchaseRead />,
+    },
+    {
+      path: '/purchase/update/:id',
+      element: <PurchaseUpdate />,
     },
     {
       path: '/cash',

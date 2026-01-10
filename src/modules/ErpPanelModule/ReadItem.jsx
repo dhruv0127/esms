@@ -87,6 +87,12 @@ export default function ReadItem({ config, selectedItem }) {
       phone: '',
       address: '',
     },
+    supplier: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+    },
     subTotal: 0,
     taxTotal: 0,
     taxRate: 0,
@@ -99,6 +105,7 @@ export default function ReadItem({ config, selectedItem }) {
   const [itemslist, setItemsList] = useState([]);
   const [currentErp, setCurrentErp] = useState(selectedItem ?? resetErp);
   const [client, setClient] = useState({});
+  const [supplier, setSupplier] = useState({});
 
   useEffect(() => {
     if (currentResult) {
@@ -107,7 +114,7 @@ export default function ReadItem({ config, selectedItem }) {
       if (items) {
         setItemsList(items);
         setCurrentErp(currentResult);
-      } else if (invoice.items) {
+      } else if (invoice?.items) {
         setItemsList(invoice.items);
         setCurrentErp({ ...invoice.items, ...others, ...invoice });
       }
@@ -122,7 +129,15 @@ export default function ReadItem({ config, selectedItem }) {
     if (currentErp?.client) {
       setClient(currentErp.client);
     }
+    if (currentErp?.supplier) {
+      setSupplier(currentErp.supplier);
+    }
   }, [currentErp]);
+
+  // Determine if this is a purchase (has supplier) or invoice/quote (has client)
+  const isPurchase = entity === 'purchase';
+  const partyData = isPurchase ? supplier : client;
+  const partyLabel = isPurchase ? 'Supplier' : 'Client';
 
   return (
     <>
@@ -235,10 +250,10 @@ export default function ReadItem({ config, selectedItem }) {
         </Row>
       </PageHeader>
       <Divider dashed />
-      <Descriptions title={`Client : ${currentErp.client.name}`}>
-        <Descriptions.Item label={translate('Address')}>{client.address}</Descriptions.Item>
-        <Descriptions.Item label={translate('email')}>{client.email}</Descriptions.Item>
-        <Descriptions.Item label={translate('Phone')}>{client.phone}</Descriptions.Item>
+      <Descriptions title={`${translate(partyLabel)} : ${partyData?.name || ''}`}>
+        <Descriptions.Item label={translate('Address')}>{partyData?.address}</Descriptions.Item>
+        <Descriptions.Item label={translate('email')}>{partyData?.email}</Descriptions.Item>
+        <Descriptions.Item label={translate('Phone')}>{partyData?.phone}</Descriptions.Item>
       </Descriptions>
       <Divider />
       <Row gutter={[12, 0]}>

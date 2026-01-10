@@ -29,6 +29,7 @@ import {
   AppstoreOutlined,
   DollarOutlined,
   TeamOutlined,
+  ShoppingCartOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -77,6 +78,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'invoice',
       icon: <ContainerOutlined />,
       label: <Link to={'/invoice'}>{translate('invoices')}</Link>,
+    },
+    {
+      key: 'purchase',
+      icon: <ShoppingCartOutlined />,
+      label: <Link to={'/purchase'}>{translate('purchases')}</Link>,
     },
     {
       key: 'quote',
