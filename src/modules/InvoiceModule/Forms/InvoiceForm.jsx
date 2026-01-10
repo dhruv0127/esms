@@ -38,6 +38,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
   const [taxTotal, setTaxTotal] = useState(0);
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [lastNumber, setLastNumber] = useState(() => last_invoice_number + 1);
+  const [selectedClient, setSelectedClient] = useState(null);
 
   const handelTaxChange = (value) => {
     setTaxRate(value / 100);
@@ -63,6 +64,14 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
     addField.current.click();
   }, []);
 
+  const handleClientChange = (clientId, clientObject) => {
+    if (clientObject) {
+      setSelectedClient(clientObject);
+    } else {
+      setSelectedClient(null);
+    }
+  };
+
   return (
     <>
       <Row gutter={[12, 0]}>
@@ -83,6 +92,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
               redirectLabel={'Add New Client'}
               withRedirect
               urlToRedirect={'/customer'}
+              onChange={handleClientChange}
             />
           </Form.Item>
         </Col>
@@ -191,7 +201,7 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
         {(fields, { add, remove }) => (
           <>
             {fields.map((field) => (
-              <ItemRow key={field.key} remove={remove} field={field} current={current}></ItemRow>
+              <ItemRow key={field.key} remove={remove} field={field} current={current} selectedClient={selectedClient}></ItemRow>
             ))}
             <Form.Item>
               <Button

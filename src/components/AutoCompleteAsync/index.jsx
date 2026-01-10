@@ -38,13 +38,22 @@ export default function AutoCompleteAsync({
 
   const handleSelectChange = (newValue) => {
     isUpdating.current = false;
-    // setCurrentValue(value[outputValue] || value); // set nested value or value
-    // onChange(newValue[outputValue] || newValue);
-    if (onChange) {
-      if (newValue) onChange(newValue[outputValue] || newValue);
-    }
+
     if (newValue === 'redirectURL' && withRedirect) {
       navigate(urlToRedirect);
+      return;
+    }
+
+    // Find the full object from selectOptions
+    const selectedItem = selectOptions.find(item => item[outputValue] === newValue);
+
+    if (onChange) {
+      if (selectedItem) {
+        // Pass both the output value and the full object
+        onChange(selectedItem[outputValue] || selectedItem, selectedItem);
+      } else if (newValue) {
+        onChange(newValue);
+      }
     }
   };
 
