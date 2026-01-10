@@ -40,7 +40,7 @@ function AddNewItem({ config }) {
   );
 }
 export default function DataTable({ config, extra = [] }) {
-  let { entity, dataTableColumns, DATATABLE_TITLE, fields, searchConfig } = config;
+  let { entity, dataTableColumns, DATATABLE_TITLE, fields, searchConfig, onRead } = config;
   const { crudContextAction } = useCrudContext();
   const { panel, collapsedBox, modal, readBox, editBox, advancedBox } = crudContextAction;
   const translate = useLanguage();
@@ -71,10 +71,15 @@ export default function DataTable({ config, extra = [] }) {
   ];
 
   const handleRead = (record) => {
-    dispatch(crud.currentItem({ data: record }));
-    panel.open();
-    collapsedBox.open();
-    readBox.open();
+    // If custom onRead is provided, use it instead of default behavior
+    if (onRead) {
+      onRead(record);
+    } else {
+      dispatch(crud.currentItem({ data: record }));
+      panel.open();
+      collapsedBox.open();
+      readBox.open();
+    }
   };
   function handleEdit(record) {
     dispatch(crud.currentItem({ data: record }));

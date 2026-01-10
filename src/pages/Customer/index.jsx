@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import CrudModule from '@/modules/CrudModule/CrudModule';
 import DynamicForm from '@/forms/DynamicForm';
 import { fields } from './config';
@@ -6,6 +7,7 @@ import useLanguage from '@/locale/useLanguage';
 
 export default function Customer() {
   const translate = useLanguage();
+  const navigate = useNavigate();
   const entity = 'client';
   const searchConfig = {
     displayLabels: ['name'],
@@ -28,6 +30,10 @@ export default function Customer() {
     fields,
     searchConfig,
     deleteModalLabels,
+    // Override the default read action to navigate to detail page
+    onRead: (record) => {
+      navigate(`/customer/${record._id}`);
+    },
   };
   return (
     <CrudModule
