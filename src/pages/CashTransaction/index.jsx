@@ -1,11 +1,15 @@
-import CrudModule from '@/modules/CrudModule/CrudModule';
+import CashTransactionCrudModule from './CashTransactionCrudModule';
 import CashTransactionForm from '@/forms/CashTransactionForm';
 import { fields } from './config';
+import dayjs from 'dayjs';
 
 import useLanguage from '@/locale/useLanguage';
+import { useMoney, useDate } from '@/settings';
 
 export default function CashTransaction() {
   const translate = useLanguage();
+  const { dateFormat } = useDate();
+  const { moneyFormatter } = useMoney();
   const entity = 'cashtransaction';
 
   const searchConfig = {
@@ -24,10 +28,12 @@ export default function CashTransaction() {
     {
       title: translate('Amount'),
       dataIndex: 'amount',
+      render: (amount) => moneyFormatter({ amount }),
     },
     {
       title: translate('Date'),
       dataIndex: 'date',
+      render: (date) => dayjs(date).format(dateFormat),
     },
     {
       title: translate('Party Type'),
@@ -62,14 +68,13 @@ export default function CashTransaction() {
 
   const config = {
     ...configPage,
-    fields,
     searchConfig,
     deleteModalLabels,
     dataTableColumns,
   };
 
   return (
-    <CrudModule
+    <CashTransactionCrudModule
       createForm={<CashTransactionForm />}
       updateForm={<CashTransactionForm />}
       config={config}

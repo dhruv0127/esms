@@ -9,6 +9,7 @@ import {
   CloseCircleOutlined,
   RetweetOutlined,
   MailOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -171,7 +172,16 @@ export default function ReadItem({ config, selectedItem }) {
           >
             {translate('Convert to Invoice')}
           </Button>,
-
+          <Button
+            key={`${uniqueId()}`}
+            onClick={() => {
+              navigate('/cash');
+            }}
+            icon={<DollarOutlined />}
+            style={{ display: entity === 'invoice' ? 'inline-block' : 'none' }}
+          >
+            {translate('Cash Transaction')}
+          </Button>,
           <Button
             key={`${uniqueId()}`}
             onClick={() => {
