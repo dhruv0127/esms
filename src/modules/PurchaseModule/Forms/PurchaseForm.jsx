@@ -23,17 +23,19 @@ export default function PurchaseForm({ subTotal = 0, current = null }) {
   const financeSettings = useSelector(selectFinanceSettings);
   const last_purchase_number = financeSettings?.last_purchase_number ?? 0;
 
-  return <LoadPurchaseForm subTotal={subTotal} current={current} lastPurchaseNumber={last_purchase_number} />;
+  return <LoadPurchaseForm subTotal={subTotal} current={current} />;
 }
 
-function LoadPurchaseForm({ subTotal = 0, current = null, lastPurchaseNumber = 0 }) {
+function LoadPurchaseForm({ subTotal = 0, current = null }) {
   const translate = useLanguage();
   const { dateFormat } = useDate();
+  const financeSettings = useSelector(selectFinanceSettings);
+  const last_purchase_number = financeSettings?.last_purchase_number ?? 0;
   const [total, setTotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
   const [taxTotal, setTaxTotal] = useState(0);
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
-  const [lastNumber, setLastNumber] = useState(() => lastPurchaseNumber + 1);
+  const [lastNumber, setLastNumber] = useState(() => last_purchase_number + 1);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
 
   const handelTaxChange = (value) => {
