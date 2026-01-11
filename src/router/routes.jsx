@@ -35,6 +35,7 @@ const PaymentMode = lazy(() => import('@/pages/PaymentMode'));
 const Taxes = lazy(() => import('@/pages/Taxes'));
 
 const Profile = lazy(() => import('@/pages/Profile'));
+const Reports = lazy(() => import('@/pages/Reports'));
 
 const About = lazy(() => import('@/pages/About'));
 
@@ -167,6 +168,10 @@ let routes = {
     {
       path: '/profile',
       element: <Profile />,
+    },
+    {
+      path: '/reports',
+      element: <Reports />,
     },
     {
       path: '*',

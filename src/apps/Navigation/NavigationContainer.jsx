@@ -30,6 +30,7 @@ import {
   DollarOutlined,
   TeamOutlined,
   ShoppingCartOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -98,6 +99,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'cash',
       icon: <DollarOutlined />,
       label: <Link to={'/cash'}>{translate('cash_management')}</Link>,
+    },
+    {
+      key: 'reports',
+      icon: <BarChartOutlined />,
+      label: <Link to={'/reports'}>{translate('reports')}</Link>,
     },
 
     {

@@ -462,6 +462,12 @@ const lang = {
   offers: 'Offers',
   proforma_invoices: 'quote',
   search: 'search',
+  reports: 'Reports',
+  inventory: 'Inventory',
+  purchases: 'Purchases',
+  cash_type: 'Cash Type',
+  party_name: 'Party Name',
+  outstanding: 'Outstanding',
 };
 
 export default lang;
