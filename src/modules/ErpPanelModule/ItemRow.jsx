@@ -7,7 +7,7 @@ import calculate from '@/utils/calculate';
 import SelectInventoryItem from '@/components/SelectInventoryItem';
 import { request } from '@/request';
 
-export default function ItemRow({ field, remove, current = null, selectedClient = null }) {
+export default function ItemRow({ field, remove, current = null, selectedClient = null, selectedSupplier = null }) {
   const form = Form.useFormInstance();
   const [totalState, setTotal] = useState(undefined);
   const [price, setPrice] = useState(0);
@@ -17,6 +17,11 @@ export default function ItemRow({ field, remove, current = null, selectedClient 
   const priceUpdateTimeoutRef = useRef(null);
 
   const money = useMoney();
+
+  // Determine if we're dealing with client or supplier
+  const selectedParty = selectedClient || selectedSupplier;
+  const partyEntity = selectedClient ? 'client' : 'supplier';
+
   const updateQt = (value) => {
     setQuantity(value);
   };
@@ -24,24 +29,24 @@ export default function ItemRow({ field, remove, current = null, selectedClient 
     setPrice(value);
 
     // Check if this is a manual price change (different from auto-filled price)
-    if (selectedClient && selectedProductName && autoFilledPrice !== null && value !== autoFilledPrice) {
+    if (selectedParty && selectedProductName && autoFilledPrice !== null && value !== autoFilledPrice) {
       // Debounce the API call to avoid too many requests while user is typing
       if (priceUpdateTimeoutRef.current) {
         clearTimeout(priceUpdateTimeoutRef.current);
       }
 
       priceUpdateTimeoutRef.current = setTimeout(() => {
-        updateClientCustomPricing(value);
+        updatePartyCustomPricing(value);
       }, 1000); // Wait 1 second after user stops typing
     }
   };
 
-  const updateClientCustomPricing = async (newPrice) => {
-    if (!selectedClient || !selectedProductName || !newPrice) return;
+  const updatePartyCustomPricing = async (newPrice) => {
+    if (!selectedParty || !selectedProductName || !newPrice) return;
 
     try {
       // Get existing custom pricing
-      let updatedPricing = [...(selectedClient.customPricing || [])];
+      let updatedPricing = [...(selectedParty.customPricing || [])];
 
       // Find if this product already has custom pricing
       const existingIndex = updatedPricing.findIndex((p) => p.product === selectedProductName);
@@ -54,10 +59,10 @@ export default function ItemRow({ field, remove, current = null, selectedClient 
         updatedPricing.push({ product: selectedProductName, customPrice: newPrice });
       }
 
-      // Update client with new custom pricing
+      // Update client or supplier with new custom pricing
       await request.update({
-        entity: 'client',
-        id: selectedClient._id,
+        entity: partyEntity,
+        id: selectedParty._id,
         jsonData: { customPricing: updatedPricing },
       });
 
@@ -74,13 +79,13 @@ export default function ItemRow({ field, remove, current = null, selectedClient 
     if (selectedItem && selectedItem.unitPrice && selectedItem.product) {
       let newPrice = selectedItem.unitPrice; // Default price from inventory
 
-      // Check if client has custom pricing for this product
-      if (selectedClient && selectedClient.customPricing && Array.isArray(selectedClient.customPricing)) {
-        const customPricing = selectedClient.customPricing.find(
+      // Check if client or supplier has custom pricing for this product
+      if (selectedParty && selectedParty.customPricing && Array.isArray(selectedParty.customPricing)) {
+        const customPricing = selectedParty.customPricing.find(
           (pricing) => pricing.product === selectedItem.product
         );
         if (customPricing && customPricing.customPrice) {
-          newPrice = customPricing.customPrice; // Use client-specific price
+          newPrice = customPricing.customPrice; // Use party-specific price
         }
       }
 
