@@ -110,6 +110,33 @@ export default function Reports() {
       });
     });
 
+    // Add return/exchanges
+    if (reportData.details.returnExchanges) {
+      reportData.details.returnExchanges.forEach((returnExchange) => {
+        const isReturn = returnExchange.type === 'return';
+        const amount = isReturn
+          ? returnExchange.returnedItem?.total || 0
+          : Math.abs(returnExchange.priceDifference || 0);
+
+        transactions.push({
+          _id: `returnexchange-${returnExchange._id}`,
+          date: returnExchange.date,
+          cashType: isReturn ? 'Return' : 'Exchange',
+          partyType: 'Client',
+          partyName: returnExchange.customer?.name || '-',
+          partyId: returnExchange.customer?._id || null,
+          amount: amount,
+          outstanding: isReturn
+            ? -(returnExchange.returnedItem?.total || 0) // Returns reduce what customer owes
+            : -(returnExchange.priceDifference || 0), // Positive diff means customer owes more
+          currency: returnExchange.currency,
+          type: 'returnexchange',
+          number: returnExchange.number,
+          returnExchangeType: returnExchange.type,
+        });
+      });
+    }
+
     // Sort by date (oldest first for running balance calculation)
     const sortedTransactions = transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -170,6 +197,8 @@ export default function Reports() {
         else if (cashType === 'Purchase') color = 'orange';
         else if (cashType === 'Cash In') color = 'green';
         else if (cashType === 'Cash Out') color = 'red';
+        else if (cashType === 'Return') color = 'purple';
+        else if (cashType === 'Exchange') color = 'cyan';
         return <Tag color={color}>{cashType}</Tag>;
       },
       filters: [
@@ -177,6 +206,8 @@ export default function Reports() {
         { text: 'Purchase', value: 'Purchase' },
         { text: 'Cash In', value: 'Cash In' },
         { text: 'Cash Out', value: 'Cash Out' },
+        { text: 'Return', value: 'Return' },
+        { text: 'Exchange', value: 'Exchange' },
       ],
       onFilter: (value, record) => record.cashType === value,
     },

@@ -36,6 +36,10 @@ const Taxes = lazy(() => import('@/pages/Taxes'));
 
 const Profile = lazy(() => import('@/pages/Profile'));
 const Reports = lazy(() => import('@/pages/Reports'));
+const ReturnExchange = lazy(() => import('@/pages/ReturnExchange'));
+const ReturnExchangeCreate = lazy(() => import('@/pages/ReturnExchange/ReturnExchangeCreate'));
+const ReturnExchangeRead = lazy(() => import('@/pages/ReturnExchange/ReturnExchangeRead'));
+const ReturnExchangeUpdate = lazy(() => import('@/pages/ReturnExchange/ReturnExchangeUpdate'));
 
 const About = lazy(() => import('@/pages/About'));
 
@@ -172,6 +176,22 @@ let routes = {
     {
       path: '/reports',
       element: <Reports />,
+    },
+    {
+      path: '/returnexchange',
+      element: <ReturnExchange />,
+    },
+    {
+      path: '/returnexchange/create',
+      element: <ReturnExchangeCreate />,
+    },
+    {
+      path: '/returnexchange/read/:id',
+      element: <ReturnExchangeRead />,
+    },
+    {
+      path: '/returnexchange/update/:id',
+      element: <ReturnExchangeUpdate />,
     },
     {
       path: '*',

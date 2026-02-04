@@ -31,6 +31,7 @@ import {
   TeamOutlined,
   ShoppingCartOutlined,
   BarChartOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -104,6 +105,11 @@ function Sidebar({ collapsible, isMobile = false }) {
       key: 'reports',
       icon: <BarChartOutlined />,
       label: <Link to={'/reports'}>{translate('reports')}</Link>,
+    },
+    {
+      key: 'returnexchange',
+      icon: <SwapOutlined />,
+      label: <Link to={'/returnexchange'}>{translate('return_exchange')}</Link>,
     },
 
     {

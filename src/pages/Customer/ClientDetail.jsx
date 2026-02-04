@@ -19,6 +19,8 @@ export default function ClientDetail() {
   const [client, setClient] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [cashTransactions, setCashTransactions] = useState([]);
+  const [returnExchanges, setReturnExchanges] = useState([]);
+  const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pricingModalVisible, setPricingModalVisible] = useState(false);
   const [editingPricing, setEditingPricing] = useState(null);
@@ -61,6 +63,26 @@ export default function ClientDetail() {
         );
         setCashTransactions(clientTransactions);
       }
+
+      // Fetch client return/exchanges
+      const returnExchangeResponse = await request.list({
+        entity: 'returnexchange',
+        options: { page: 1, items: 100 },
+      });
+      if (returnExchangeResponse.success) {
+        const clientReturnExchanges = returnExchangeResponse.result.filter(
+          (re) => re.customer && re.customer._id === id
+        );
+        setReturnExchanges(clientReturnExchanges);
+      }
+
+      // Fetch client balance from backend
+      const balanceResponse = await request.get({
+        entity: `client/balance/${id}`,
+      });
+      if (balanceResponse.success) {
+        setBalance(balanceResponse.result);
+      }
     } catch (error) {
       console.error('Error fetching client data:', error);
     } finally {
@@ -70,40 +92,94 @@ export default function ClientDetail() {
 
   const invoiceColumns = [
     {
-      title: translate('Invoice Number'),
+      title: translate('Type'),
+      dataIndex: 'type',
+      key: 'type',
+      render: (type, record) => {
+        if (type === 'return' || type === 'exchange') {
+          const color = type === 'return' ? 'purple' : 'cyan';
+          return <Tag color={color}>{translate(type).toUpperCase()}</Tag>;
+        }
+        return <Tag color="blue">INVOICE</Tag>;
+      },
+      filters: [
+        { text: 'Invoice', value: 'invoice' },
+        { text: 'Return', value: 'return' },
+        { text: 'Exchange', value: 'exchange' },
+      ],
+      onFilter: (value, record) => record.type === value,
+    },
+    {
+      title: translate('Number'),
       dataIndex: 'number',
       key: 'number',
-      render: (number, record) => (
-        <Button
-          type="link"
-          onClick={() => navigate(`/invoice/read/${record._id}`)}
-        >
-          #{number}
-        </Button>
-      ),
+      render: (number, record) => {
+        const entity = record.type === 'return' || record.type === 'exchange' ? 'returnexchange' : 'invoice';
+        return (
+          <Button
+            type="link"
+            onClick={() => navigate(`/${entity}/read/${record._id}`)}
+          >
+            #{number}{record.year ? `/${record.year}` : ''}
+          </Button>
+        );
+      },
     },
     {
       title: translate('Date'),
       dataIndex: 'date',
       key: 'date',
       render: (date) => dayjs(date).format('DD/MM/YYYY'),
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
     },
     {
       title: translate('Total'),
       dataIndex: 'total',
       key: 'total',
-      render: (total) => `${money.currency_symbol}${total.toFixed(2)}`,
+      render: (total, record) => {
+        if (record.type === 'return' || record.type === 'exchange') {
+          return `${money.currency_symbol}${(record.returnedItem?.total || 0).toFixed(2)}`;
+        }
+        return `${money.currency_symbol}${total.toFixed(2)}`;
+      },
     },
     {
       title: translate('Paid'),
       dataIndex: 'credit',
       key: 'credit',
-      render: (credit) => `${money.currency_symbol}${(credit || 0).toFixed(2)}`,
+      render: (credit, record) => {
+        if (record.type === 'return' || record.type === 'exchange') {
+          return '-';
+        }
+        return `${money.currency_symbol}${(credit || 0).toFixed(2)}`;
+      },
     },
     {
       title: translate('Balance'),
       key: 'balance',
       render: (_, record) => {
+        if (record.type === 'return') {
+          const amount = record.returnedItem?.total || 0;
+          return (
+            <span style={{ color: 'green' }}>
+              -{money.currency_symbol}
+              {amount.toFixed(2)}
+            </span>
+          );
+        }
+        if (record.type === 'exchange' && record.priceDifference) {
+          const color = record.priceDifference > 0 ? 'red' : 'green';
+          return (
+            <span style={{ color }}>
+              {record.priceDifference > 0 ? '+' : ''}
+              {money.currency_symbol}
+              {record.priceDifference.toFixed(2)}
+            </span>
+          );
+        }
+        if (record.type === 'exchange') {
+          return `${money.currency_symbol}0.00`;
+        }
         const balance = record.total - (record.credit || 0);
         return `${money.currency_symbol}${balance.toFixed(2)}`;
       },
@@ -112,7 +188,15 @@ export default function ClientDetail() {
       title: translate('Status'),
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
-      render: (status) => {
+      render: (status, record) => {
+        if (record.type === 'return' || record.type === 'exchange') {
+          const statusValue = record.status || 'pending';
+          let color = 'default';
+          if (statusValue === 'completed') color = 'green';
+          else if (statusValue === 'approved') color = 'blue';
+          else if (statusValue === 'rejected') color = 'red';
+          return <Tag color={color}>{statusValue.toUpperCase()}</Tag>;
+        }
         let color = 'red';
         if (status === 'paid') color = 'green';
         if (status === 'partially') color = 'orange';
@@ -297,6 +381,7 @@ export default function ClientDetail() {
     },
   ];
 
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -309,10 +394,21 @@ export default function ClientDetail() {
     return <div>Client not found</div>;
   }
 
-  // Calculate totals
-  const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0);
-  const totalPaid = invoices.reduce((sum, inv) => sum + (inv.credit || 0), 0);
-  const totalBalance = totalInvoiced - totalPaid;
+  // Combine invoices and return/exchanges for the invoices tab
+  const combinedInvoiceData = [
+    ...invoices.map(inv => ({ ...inv, type: 'invoice' })),
+    ...returnExchanges
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Combine cash transactions with return/exchanges (for cash-related returns)
+  const combinedCashData = [...cashTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Use backend balance if available, otherwise calculate locally
+  const totalInvoiced = balance?.totalInvoiced || invoices.reduce((sum, inv) => sum + inv.total, 0);
+  const totalPaid = balance?.totalPaid || invoices.reduce((sum, inv) => sum + (inv.credit || 0), 0);
+  const totalReturns = balance?.totalReturns || 0;
+  const totalExchangeDifference = balance?.totalExchangeDifference || 0;
+  const totalBalance = balance?.outstanding || (totalInvoiced - totalPaid - totalReturns + totalExchangeDifference);
   const totalCashIn = cashTransactions
     .filter((t) => t.type === 'in')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -370,20 +466,31 @@ export default function ClientDetail() {
         <Col span={6}>
           <Card>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#888' }}>Balance Due</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'red' }}>
+              <div style={{ fontSize: '14px', color: '#888' }}>Returns</div>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'purple' }}>
                 {money.currency_symbol}
-                {totalBalance.toFixed(2)}
+                {totalReturns.toFixed(2)}
               </div>
+              {totalExchangeDifference !== 0 && (
+                <div style={{ fontSize: '12px', color: totalExchangeDifference > 0 ? 'red' : 'green', marginTop: '4px' }}>
+                  Exchange Adj: {totalExchangeDifference > 0 ? '+' : ''}
+                  {money.currency_symbol}
+                  {Math.abs(totalExchangeDifference).toFixed(2)}
+                </div>
+              )}
             </div>
           </Card>
         </Col>
         <Col span={6}>
           <Card>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#888' }}>Total Transactions</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-                {cashTransactions.length}
+              <div style={{ fontSize: '14px', color: '#888' }}>Balance Due</div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: totalBalance > 0 ? 'red' : 'green' }}>
+                {money.currency_symbol}
+                {Math.abs(totalBalance).toFixed(2)}
+              </div>
+              <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                {totalBalance > 0 ? 'To Receive' : totalBalance < 0 ? 'To Pay' : 'Settled'}
               </div>
             </div>
           </Card>
@@ -392,18 +499,18 @@ export default function ClientDetail() {
 
       <Card>
         <Tabs defaultActiveKey="1">
-          <TabPane tab={`Invoices (${invoices.length})`} key="1">
+          <TabPane tab={`Invoices & Returns (${combinedInvoiceData.length})`} key="1">
             <Table
               columns={invoiceColumns}
-              dataSource={invoices}
+              dataSource={combinedInvoiceData}
               rowKey="_id"
               pagination={{ pageSize: 10 }}
             />
           </TabPane>
-          <TabPane tab={`Cash Transactions (${cashTransactions.length})`} key="2">
+          <TabPane tab={`Cash Transactions (${combinedCashData.length})`} key="2">
             <Table
               columns={cashColumns}
-              dataSource={cashTransactions}
+              dataSource={combinedCashData}
               rowKey="_id"
               pagination={{ pageSize: 10 }}
             />
