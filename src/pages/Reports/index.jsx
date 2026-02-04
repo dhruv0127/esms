@@ -49,7 +49,7 @@ export default function Reports() {
     }
   };
 
-  // Combine all transactions into a unified list
+  // Combine all transactions into a unified list with running balances
   const allTransactions = useMemo(() => {
     if (!reportData) return [];
 
@@ -63,6 +63,7 @@ export default function Reports() {
         cashType: 'Invoice',
         partyType: 'Client',
         partyName: invoice.client?.name || '-',
+        partyId: invoice.client?._id || null,
         amount: invoice.total || 0,
         outstanding: (invoice.total || 0) - (invoice.credit || 0),
         currency: invoice.currency,
@@ -79,6 +80,7 @@ export default function Reports() {
         cashType: 'Purchase',
         partyType: 'Supplier',
         partyName: purchase.supplier?.name || '-',
+        partyId: purchase.supplier?._id || null,
         amount: purchase.total || 0,
         outstanding: -((purchase.total || 0) - (purchase.credit || 0)), // Negative for purchases
         currency: purchase.currency,
@@ -90,6 +92,8 @@ export default function Reports() {
     // Add cash transactions
     reportData.details.cashTransactions.forEach((cash) => {
       const isIn = cash.type === 'in';
+      const partyId = cash.partyType === 'client' ? cash.client?._id : cash.supplier?._id;
+
       transactions.push({
         _id: `cash-${cash._id}`,
         date: cash.date,
@@ -97,6 +101,7 @@ export default function Reports() {
         partyType: cash.partyType === 'client' ? 'Client' : 'Supplier',
         partyName:
           cash.partyType === 'client' ? cash.client?.name || '-' : cash.supplier?.name || '-',
+        partyId: partyId || null,
         amount: cash.amount || 0,
         outstanding: 0, // Cash transactions are settled immediately
         currency: cash.currency,
@@ -105,8 +110,46 @@ export default function Reports() {
       });
     });
 
-    // Sort by date (newest first)
-    return transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort by date (oldest first for running balance calculation)
+    const sortedTransactions = transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Calculate running balance for each party
+    const partyBalances = {}; // Track running balance by partyId
+
+    const transactionsWithBalance = sortedTransactions.map((txn) => {
+      const partyKey = `${txn.partyType}-${txn.partyId}`;
+
+      // Initialize balance if not exists
+      if (!partyBalances[partyKey]) {
+        partyBalances[partyKey] = 0;
+      }
+
+      // Update balance based on transaction type
+      if (txn.type === 'invoice') {
+        // Invoice increases client balance (they owe us)
+        partyBalances[partyKey] += txn.outstanding;
+      } else if (txn.type === 'purchase') {
+        // Purchase increases supplier balance we owe (negative)
+        partyBalances[partyKey] += txn.outstanding;
+      } else if (txn.type === 'cash') {
+        // Cash transaction affects balance
+        if (txn.cashType === 'Cash In') {
+          // Cash received reduces what they owe us
+          partyBalances[partyKey] -= txn.amount;
+        } else {
+          // Cash paid reduces what we owe them
+          partyBalances[partyKey] += txn.amount;
+        }
+      }
+
+      return {
+        ...txn,
+        partyBalance: partyBalances[partyKey],
+      };
+    });
+
+    // Return sorted by date (newest first) for display
+    return transactionsWithBalance.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [reportData]);
 
   const transactionColumns = [
@@ -176,6 +219,31 @@ export default function Reports() {
         );
       },
       sorter: (a, b) => a.outstanding - b.outstanding,
+    },
+    {
+      title: translate('Party Balance'),
+      dataIndex: 'partyBalance',
+      key: 'partyBalance',
+      align: 'right',
+      render: (partyBalance, record) => {
+        const color = partyBalance > 0 ? '#52c41a' : partyBalance < 0 ? '#ff4d4f' : '#666';
+        return (
+          <span
+            style={{
+              color,
+              fontWeight: 'bold',
+              backgroundColor: partyBalance !== 0 ? (partyBalance > 0 ? '#f6ffed' : '#fff2f0') : 'transparent',
+              padding: '2px 8px',
+              borderRadius: '4px',
+            }}
+          >
+            {moneyFormatter({ amount: Math.abs(partyBalance), currency_code: record.currency })}
+            {partyBalance > 0 && ' (To Receive)'}
+            {partyBalance < 0 && ' (To Pay)'}
+          </span>
+        );
+      },
+      sorter: (a, b) => a.partyBalance - b.partyBalance,
     },
   ];
 

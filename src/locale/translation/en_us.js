@@ -468,6 +468,8 @@ const lang = {
   cash_type: 'Cash Type',
   party_name: 'Party Name',
   outstanding: 'Outstanding',
+  party_balance: 'Party Balance',
+  outstanding_balance: 'Outstanding Balance',
 };
 
 export default lang;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
-import { Form, Input, InputNumber, Button, Select, Divider, Row, Col } from 'antd';
+import { Form, Input, InputNumber, Button, Select, Divider, Row, Col, Alert } from 'antd';
 
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -12,12 +12,13 @@ import ItemRow from '@/modules/ErpPanelModule/ItemRow';
 
 import MoneyInputFormItem from '@/components/MoneyInputFormItem';
 import { selectFinanceSettings } from '@/redux/settings/selectors';
-import { useDate } from '@/settings';
+import { useDate, useMoney } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
 
 import calculate from '@/utils/calculate';
 import { useSelector } from 'react-redux';
 import SelectAsync from '@/components/SelectAsync';
+import { request } from '@/request';
 
 export default function PurchaseForm({ subTotal = 0, current = null }) {
   const financeSettings = useSelector(selectFinanceSettings);
@@ -29,6 +30,7 @@ export default function PurchaseForm({ subTotal = 0, current = null }) {
 function LoadPurchaseForm({ subTotal = 0, current = null }) {
   const translate = useLanguage();
   const { dateFormat } = useDate();
+  const { moneyFormatter } = useMoney();
   const financeSettings = useSelector(selectFinanceSettings);
   const last_purchase_number = financeSettings?.last_purchase_number ?? 0;
   const [total, setTotal] = useState(0);
@@ -37,6 +39,8 @@ function LoadPurchaseForm({ subTotal = 0, current = null }) {
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [lastNumber, setLastNumber] = useState(() => last_purchase_number + 1);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [supplierBalance, setSupplierBalance] = useState(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
 
   const handelTaxChange = (value) => {
     setTaxRate(value / 100);
@@ -62,11 +66,27 @@ function LoadPurchaseForm({ subTotal = 0, current = null }) {
     addField.current.click();
   }, []);
 
-  const handleSupplierChange = (clientId, clientObject) => {
-    if (clientObject) {
-      setSelectedSupplier(clientObject);
+  const handleSupplierChange = async (supplierId, supplierObject) => {
+    if (supplierObject) {
+      setSelectedSupplier(supplierObject);
+      // Fetch supplier balance
+      setLoadingBalance(true);
+      try {
+        const response = await request.get({
+          entity: `supplier/balance/${supplierId}`,
+        });
+        if (response.success) {
+          setSupplierBalance(response.result);
+        }
+      } catch (error) {
+        console.error('Error fetching supplier balance:', error);
+        setSupplierBalance(null);
+      } finally {
+        setLoadingBalance(false);
+      }
     } else {
       setSelectedSupplier(null);
+      setSupplierBalance(null);
     }
   };
 
@@ -285,6 +305,38 @@ function LoadPurchaseForm({ subTotal = 0, current = null }) {
             <MoneyInputFormItem readOnly value={total} />
           </Col>
         </Row>
+        {supplierBalance && supplierBalance.outstanding !== 0 && (
+          <Row gutter={[12, -5]} style={{ marginTop: 10 }}>
+            <Col className="gutter-row" span={4} offset={15}>
+              <p
+                style={{
+                  paddingLeft: '12px',
+                  paddingTop: '5px',
+                  margin: 0,
+                  textAlign: 'right',
+                  fontWeight: 'bold',
+                }}
+              >
+                {translate('Outstanding Balance')} :
+              </p>
+            </Col>
+            <Col className="gutter-row" span={5}>
+              <div
+                style={{
+                  padding: '4px 11px',
+                  backgroundColor: supplierBalance.outstanding > 0 ? '#fff1f0' : '#f6ffed',
+                  border: `1px solid ${supplierBalance.outstanding > 0 ? '#ffccc7' : '#b7eb8f'}`,
+                  borderRadius: '6px',
+                  color: supplierBalance.outstanding > 0 ? '#cf1322' : '#389e0d',
+                  fontWeight: 'bold',
+                  textAlign: 'right',
+                }}
+              >
+                {moneyFormatter({ amount: Math.abs(supplierBalance.outstanding) })}
+              </div>
+            </Col>
+          </Row>
+        )}
       </div>
     </>
   );

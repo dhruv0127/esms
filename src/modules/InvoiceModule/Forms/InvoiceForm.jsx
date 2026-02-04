@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
-import { Form, Input, InputNumber, Button, Select, Divider, Row, Col } from 'antd';
+import { Form, Input, InputNumber, Button, Select, Divider, Row, Col, Alert } from 'antd';
 
 import { PlusOutlined } from '@ant-design/icons';
 
@@ -12,12 +12,13 @@ import ItemRow from '@/modules/ErpPanelModule/ItemRow';
 
 import MoneyInputFormItem from '@/components/MoneyInputFormItem';
 import { selectFinanceSettings } from '@/redux/settings/selectors';
-import { useDate } from '@/settings';
+import { useDate, useMoney } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
 
 import calculate from '@/utils/calculate';
 import { useSelector } from 'react-redux';
 import SelectAsync from '@/components/SelectAsync';
+import { request } from '@/request';
 
 export default function InvoiceForm({ subTotal = 0, current = null }) {
   const { last_invoice_number } = useSelector(selectFinanceSettings);
@@ -32,6 +33,7 @@ export default function InvoiceForm({ subTotal = 0, current = null }) {
 function LoadInvoiceForm({ subTotal = 0, current = null }) {
   const translate = useLanguage();
   const { dateFormat } = useDate();
+  const { moneyFormatter } = useMoney();
   const { last_invoice_number } = useSelector(selectFinanceSettings);
   const [total, setTotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
@@ -39,6 +41,8 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [lastNumber, setLastNumber] = useState(() => last_invoice_number + 1);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [clientBalance, setClientBalance] = useState(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
 
   const handelTaxChange = (value) => {
     setTaxRate(value / 100);
@@ -64,11 +68,27 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
     addField.current.click();
   }, []);
 
-  const handleClientChange = (clientId, clientObject) => {
+  const handleClientChange = async (clientId, clientObject) => {
     if (clientObject) {
       setSelectedClient(clientObject);
+      // Fetch client balance
+      setLoadingBalance(true);
+      try {
+        const response = await request.get({
+          entity: `client/balance/${clientId}`,
+        });
+        if (response.success) {
+          setClientBalance(response.result);
+        }
+      } catch (error) {
+        console.error('Error fetching client balance:', error);
+        setClientBalance(null);
+      } finally {
+        setLoadingBalance(false);
+      }
     } else {
       setSelectedClient(null);
+      setClientBalance(null);
     }
   };
 
@@ -287,6 +307,38 @@ function LoadInvoiceForm({ subTotal = 0, current = null }) {
             <MoneyInputFormItem readOnly value={total} />
           </Col>
         </Row>
+        {clientBalance && clientBalance.outstanding !== 0 && (
+          <Row gutter={[12, -5]} style={{ marginTop: 10 }}>
+            <Col className="gutter-row" span={4} offset={15}>
+              <p
+                style={{
+                  paddingLeft: '12px',
+                  paddingTop: '5px',
+                  margin: 0,
+                  textAlign: 'right',
+                  fontWeight: 'bold',
+                }}
+              >
+                {translate('Outstanding Balance')} :
+              </p>
+            </Col>
+            <Col className="gutter-row" span={5}>
+              <div
+                style={{
+                  padding: '4px 11px',
+                  backgroundColor: clientBalance.outstanding > 0 ? '#fff7e6' : '#f6ffed',
+                  border: `1px solid ${clientBalance.outstanding > 0 ? '#ffd591' : '#b7eb8f'}`,
+                  borderRadius: '6px',
+                  color: clientBalance.outstanding > 0 ? '#d46b08' : '#389e0d',
+                  fontWeight: 'bold',
+                  textAlign: 'right',
+                }}
+              >
+                {moneyFormatter({ amount: Math.abs(clientBalance.outstanding) })}
+              </div>
+            </Col>
+          </Row>
+        )}
       </div>
     </>
   );
