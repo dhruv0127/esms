@@ -12,6 +12,7 @@ import { PageHeader } from '@ant-design/pro-layout';
 import { request } from '@/request';
 import { useMoney, useDate } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
+import useResponsive from '@/hooks/useResponsive';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -20,6 +21,7 @@ export default function Reports() {
   const translate = useLanguage();
   const { moneyFormatter } = useMoney();
   const { dateFormat } = useDate();
+  const { isMobile } = useResponsive();
 
   const [dateRange, setDateRange] = useState([dayjs().startOf('month'), dayjs().endOf('month')]);
   const [loading, setLoading] = useState(false);
@@ -284,7 +286,7 @@ export default function Reports() {
         onBack={() => window.history.back()}
         title="Detailed Reports"
         ghost={false}
-        extra={[
+        extra={isMobile ? undefined : [
           <RangePicker
             key="datepicker"
             value={dateRange}
@@ -296,19 +298,41 @@ export default function Reports() {
             Generate Report
           </Button>,
         ]}
+        style={{ padding: isMobile ? '12px' : '20px' }}
       />
 
-      <div style={{ padding: '24px' }}>
+      {isMobile && (
+        <div style={{ padding: '12px' }}>
+          <RangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            format={dateFormat}
+            style={{ width: '100%', marginBottom: 8 }}
+            size="small"
+          />
+          <Button
+            type="primary"
+            onClick={fetchReport}
+            loading={loading}
+            block
+            size="small"
+          >
+            Generate Report
+          </Button>
+        </div>
+      )}
+
+      <div style={{ padding: isMobile ? '12px' : '24px' }}>
         {loading && (
-          <div style={{ textAlign: 'center', padding: '50px' }}>
+          <div style={{ textAlign: 'center', padding: isMobile ? '30px' : '50px' }}>
             <Spin size="large" />
           </div>
         )}
 
         {!loading && reportData && (
           <>
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-              <Col span={8}>
+            <Row gutter={isMobile ? [8, 8] : 16} style={{ marginBottom: isMobile ? 12 : 24 }}>
+              <Col xs={24} sm={24} md={8} span={8}>
                 <Card>
                   <Statistic
                     title="Total Invoices"
@@ -335,7 +359,7 @@ export default function Reports() {
                   />
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col xs={24} sm={24} md={8} span={8}>
                 <Card>
                   <Statistic
                     title="Total Purchases"
@@ -362,7 +386,7 @@ export default function Reports() {
                   />
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col xs={24} sm={24} md={8} span={8}>
                 <Card>
                   <Statistic
                     title="Total Transactions"
@@ -399,16 +423,92 @@ export default function Reports() {
             </Row>
 
             <Card title={`All Transactions (${allTransactions.length})`}>
-              <Table
-                columns={transactionColumns}
-                dataSource={allTransactions}
-                rowKey="_id"
-                pagination={{
-                  showSizeChanger: true,
-                  showTotal: (total) => `Total ${total} transactions`,
-                }}
-                scroll={{ x: 1000 }}
-              />
+              {isMobile ? (
+                <div>
+                  {allTransactions.map((record, index) => (
+                    <Card
+                      key={record._id || index}
+                      style={{
+                        marginBottom: 12,
+                        borderRadius: 8,
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                      }}
+                      bodyStyle={{ padding: 12 }}
+                    >
+                      <Row gutter={[8, 8]}>
+                        <Col span={24}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Date:</span>
+                            <span style={{ fontSize: 12 }}>{dayjs(record.date).format(dateFormat)}</span>
+                          </div>
+                        </Col>
+                        <Col span={24}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Type:</span>
+                            <span style={{ fontSize: 12 }}>
+                              {record.cashType === 'Invoice' && <Tag color="blue">{record.cashType}</Tag>}
+                              {record.cashType === 'Purchase' && <Tag color="orange">{record.cashType}</Tag>}
+                              {record.cashType === 'Cash In' && <Tag color="green">{record.cashType}</Tag>}
+                              {record.cashType === 'Cash Out' && <Tag color="red">{record.cashType}</Tag>}
+                              {record.cashType === 'Return' && <Tag color="purple">{record.cashType}</Tag>}
+                              {record.cashType === 'Exchange' && <Tag color="cyan">{record.cashType}</Tag>}
+                            </span>
+                          </div>
+                        </Col>
+                        <Col span={24}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Party:</span>
+                            <span style={{ fontSize: 12 }}>{record.partyType} - {record.partyName}</span>
+                          </div>
+                        </Col>
+                        <Col span={24}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Amount:</span>
+                            <span style={{ fontSize: 12 }}>{moneyFormatter({ amount: record.amount, currency_code: record.currency })}</span>
+                          </div>
+                        </Col>
+                        <Col span={24}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Outstanding:</span>
+                            <span style={{ fontSize: 12, color: record.outstanding > 0 ? '#52c41a' : record.outstanding < 0 ? '#ff4d4f' : '#666' }}>
+                              {moneyFormatter({ amount: Math.abs(record.outstanding), currency_code: record.currency })}
+                              {record.outstanding > 0 && ' (Receivable)'}
+                              {record.outstanding < 0 && ' (Payable)'}
+                            </span>
+                          </div>
+                        </Col>
+                        <Col span={24}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Balance:</span>
+                            <span style={{
+                              fontSize: 12,
+                              fontWeight: 'bold',
+                              color: record.partyBalance > 0 ? '#52c41a' : record.partyBalance < 0 ? '#ff4d4f' : '#666',
+                            }}>
+                              {moneyFormatter({ amount: Math.abs(record.partyBalance), currency_code: record.currency })}
+                              {record.partyBalance > 0 && ' (To Receive)'}
+                              {record.partyBalance < 0 && ' (To Pay)'}
+                            </span>
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Table
+                  columns={transactionColumns}
+                  dataSource={allTransactions}
+                  rowKey="_id"
+                  pagination={{
+                    showSizeChanger: !isMobile,
+                    showTotal: (total) => `Total ${total} transactions`,
+                    pageSize: isMobile ? 10 : 20,
+                  }}
+                  scroll={{ x: isMobile ? 800 : 1000 }}
+                  size={isMobile ? 'small' : 'middle'}
+                />
+              )}
             </Card>
           </>
         )}

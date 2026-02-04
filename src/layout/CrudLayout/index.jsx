@@ -6,6 +6,7 @@ import SidePanel from '@/components/SidePanel';
 import { Layout } from 'antd';
 import { useCrudContext } from '@/context/crud';
 import { useAppContext } from '@/context/appContext';
+import useResponsive from '@/hooks/useResponsive';
 
 const { Content } = Layout;
 
@@ -13,6 +14,7 @@ const ContentBox = ({ children }) => {
   const { state: stateCrud, crudContextAction } = useCrudContext();
   const { state: stateApp } = useAppContext();
   const { isPanelClose } = stateCrud;
+  const { isMobile } = useResponsive();
   // const { isNavMenuClose } = stateApp;
   const { panel } = crudContextAction;
 
@@ -40,7 +42,7 @@ const ContentBox = ({ children }) => {
     <Content
       className="whiteBox shadow layoutPadding"
       style={{
-        margin: '30px auto',
+        margin: isMobile ? '16px auto' : '30px auto',
         width: '100%',
         maxWidth: '100%',
         flex: 'none',

@@ -6,6 +6,7 @@ import { PageHeader } from '@ant-design/pro-layout';
 import { useSelector, useDispatch } from 'react-redux';
 
 import useLanguage from '@/locale/useLanguage';
+import useResponsive from '@/hooks/useResponsive';
 
 import { settingsAction } from '@/redux/settings/actions';
 import { erp } from '@/redux/erp/actions';
@@ -41,6 +42,7 @@ export default function CreateItem({ config, CreateForm }) {
   const translate = useLanguage();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     dispatch(settingsAction.list({ entity: 'setting' }));
@@ -119,13 +121,14 @@ export default function CreateItem({ config, CreateForm }) {
             key={`${uniqueId()}`}
             onClick={() => navigate(`/${entity.toLowerCase()}`)}
             icon={<CloseCircleOutlined />}
+            size={isMobile ? 'small' : 'middle'}
           >
-            {translate('Cancel')}
+            {!isMobile && translate('Cancel')}
           </Button>,
           <SaveForm form={form} key={`${uniqueId()}`} />,
         ]}
         style={{
-          padding: '20px 0px',
+          padding: isMobile ? '12px 0px' : '20px 0px',
         }}
       ></PageHeader>
       <Divider dashed />

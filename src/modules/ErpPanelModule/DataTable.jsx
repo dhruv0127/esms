@@ -10,17 +10,19 @@ import {
   ArrowRightOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Table, Button } from 'antd';
+import { Dropdown, Table, Button, Pagination } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 
 import AutoCompleteAsync from '@/components/AutoCompleteAsync';
 import { useSelector, useDispatch } from 'react-redux';
 import useLanguage from '@/locale/useLanguage';
+import useResponsive from '@/hooks/useResponsive';
 import { erp } from '@/redux/erp/actions';
 import { selectListItems } from '@/redux/erp/selectors';
 import { useErpContext } from '@/context/erp';
 import { generate as uniqueId } from 'shortid';
 import { useNavigate } from 'react-router-dom';
+import MobileCardView from '@/components/DataTable/MobileCardView';
 
 import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
 
@@ -41,6 +43,7 @@ function AddNewItem({ config }) {
 
 export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
+  const { isMobile } = useResponsive();
   let { entity, dataTableColumns, disableAdd = false, searchConfig } = config;
 
   const { DATATABLE_TITLE } = config;
@@ -72,13 +75,15 @@ export default function DataTable({ config, extra = [] }) {
     {
       type: 'divider',
     },
-
     {
       label: translate('Delete'),
       key: 'delete',
       icon: <DeleteOutlined />,
     },
   ];
+
+  // Store original columns without action column for mobile view
+  const originalColumns = [...dataTableColumns];
 
   const navigate = useNavigate();
 
@@ -173,6 +178,28 @@ export default function DataTable({ config, extra = [] }) {
     dispatch(erp.list({ entity, options }));
   };
 
+  const handleMenuClick = (key, record) => {
+    switch (key) {
+      case 'read':
+        handleRead(record);
+        break;
+      case 'edit':
+        handleEdit(record);
+        break;
+      case 'download':
+        handleDownload(record);
+        break;
+      case 'delete':
+        handleDelete(record);
+        break;
+      case 'recordPayment':
+        handleRecordPayment(record);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -180,16 +207,13 @@ export default function DataTable({ config, extra = [] }) {
         ghost={true}
         onBack={() => window.history.back()}
         backIcon={<ArrowLeftOutlined />}
-        extra={[
+        extra={isMobile ? undefined : [
           <AutoCompleteAsync
             key={`${uniqueId()}`}
             entity={searchConfig?.entity}
             displayLabels={['name']}
             searchFields={'name'}
             onChange={filterTable}
-            // redirectLabel={'Add New Client'}
-            // withRedirect
-            // urlToRedirect={'/customer'}
           />,
           <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
             {translate('Refresh')}
@@ -198,19 +222,75 @@ export default function DataTable({ config, extra = [] }) {
           !disableAdd && <AddNewItem config={config} key={`${uniqueId()}`} />,
         ]}
         style={{
-          padding: '20px 0px',
+          padding: isMobile ? '12px 0px' : '20px 0px',
         }}
       ></PageHeader>
 
-      <Table
-        columns={dataTableColumns}
-        rowKey={(item) => item._id}
-        dataSource={dataSource}
-        pagination={pagination}
-        loading={listIsLoading}
-        onChange={handelDataTableLoad}
-        scroll={{ x: true }}
-      />
+      {isMobile && (
+        <div style={{ padding: '8px 0', marginBottom: 12 }}>
+          <AutoCompleteAsync
+            entity={searchConfig?.entity}
+            displayLabels={['name']}
+            searchFields={'name'}
+            onChange={filterTable}
+            size="small"
+            style={{ marginBottom: 8 }}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              onClick={handelDataTableLoad}
+              icon={<RedoOutlined />}
+              size="small"
+              style={{ flex: 1 }}
+            >
+              {translate('Refresh')}
+            </Button>
+            {!disableAdd && <AddNewItem config={config} />}
+          </div>
+        </div>
+      )}
+
+      {isMobile ? (
+        <>
+          <MobileCardView
+            dataSource={dataSource}
+            columns={originalColumns}
+            onRead={handleRead}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            extraActions={[
+              {
+                label: translate('Download'),
+                key: 'download',
+                icon: <FilePdfOutlined />,
+                onClick: handleDownload,
+              },
+              ...extra.map(item => ({
+                ...item,
+                onClick: (record) => handleMenuClick(item.key, record)
+              }))
+            ]}
+            loading={listIsLoading}
+          />
+          <Pagination
+            {...pagination}
+            onChange={(page, pageSize) => handelDataTableLoad({ current: page, pageSize })}
+            style={{ marginTop: 16, textAlign: 'center' }}
+            size="small"
+            showSizeChanger={false}
+          />
+        </>
+      ) : (
+        <Table
+          columns={dataTableColumns}
+          rowKey={(item) => item._id}
+          dataSource={dataSource}
+          pagination={pagination}
+          loading={listIsLoading}
+          onChange={handelDataTableLoad}
+          scroll={{ x: true }}
+        />
+      )}
     </>
   );
 }

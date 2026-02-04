@@ -15,6 +15,7 @@ import { selectCurrentItem } from '@/redux/crud/selectors';
 import useLanguage from '@/locale/useLanguage';
 import { crud } from '@/redux/crud/actions';
 import { useCrudContext } from '@/context/crud';
+import useResponsive from '@/hooks/useResponsive';
 
 import { CrudLayout } from '@/layout';
 
@@ -23,6 +24,7 @@ function SidePanelTopContent({ config, formElements, withUpload }) {
   const { crudContextAction, state } = useCrudContext();
   const { deleteModalLabels } = config;
   const { modal, editBox } = crudContextAction;
+  const { isMobile } = useResponsive();
 
   const { isReadBoxOpen, isEditBoxOpen } = state;
   const { result: currentItem } = useSelector(selectCurrentItem);
@@ -47,19 +49,21 @@ function SidePanelTopContent({ config, formElements, withUpload }) {
   };
 
   const show = isReadBoxOpen || isEditBoxOpen ? { opacity: 1 } : { opacity: 0 };
+  const gutterSize = isMobile ? [8, 8] : [24, 24];
+
   return (
     <>
-      <Row style={show} gutter={(24, 24)}>
-        <Col span={10}>
-          <p style={{ marginBottom: '10px' }}>{labels}</p>
+      <Row style={show} gutter={gutterSize}>
+        <Col xs={24} sm={10} span={10}>
+          <p style={{ marginBottom: isMobile ? '8px' : '10px' }}>{labels}</p>
         </Col>
-        <Col span={14}>
+        <Col xs={24} sm={14} span={14}>
           <Button
             onClick={removeItem}
             type="text"
             icon={<DeleteOutlined />}
             size="small"
-            style={{ float: 'right', marginLeft: '5px', marginTop: '10px' }}
+            style={{ float: 'right', marginLeft: isMobile ? '4px' : '5px', marginTop: isMobile ? '4px' : '10px' }}
           >
             {translate('remove')}
           </Button>
@@ -68,7 +72,7 @@ function SidePanelTopContent({ config, formElements, withUpload }) {
             type="text"
             icon={<EditOutlined />}
             size="small"
-            style={{ float: 'right', marginLeft: '0px', marginTop: '10px' }}
+            style={{ float: 'right', marginLeft: '0px', marginTop: isMobile ? '4px' : '10px' }}
           >
             {translate('edit')}
           </Button>
@@ -77,7 +81,7 @@ function SidePanelTopContent({ config, formElements, withUpload }) {
         <Col span={24}>
           <div className="line"></div>
         </Col>
-        <div className="space10"></div>
+        <div className={isMobile ? 'space5' : 'space10'}></div>
       </Row>
       <ReadItem config={config} />
       <UpdateForm config={config} formElements={formElements} withUpload={withUpload} />
@@ -87,6 +91,7 @@ function SidePanelTopContent({ config, formElements, withUpload }) {
 
 function FixHeaderPanel({ config }) {
   const { crudContextAction } = useCrudContext();
+  const { isMobile } = useResponsive();
 
   const { collapsedBox } = crudContextAction;
 
@@ -95,11 +100,11 @@ function FixHeaderPanel({ config }) {
   };
 
   return (
-    <Row gutter={8}>
-      <Col className="gutter-row" span={21}>
+    <Row gutter={isMobile ? 6 : 8}>
+      <Col className="gutter-row" xs={20} sm={21} span={21}>
         <SearchItem config={config} />
       </Col>
-      <Col className="gutter-row" span={3}>
+      <Col className="gutter-row" xs={4} sm={3} span={3}>
         <Button onClick={addNewItem} block={true} icon={<PlusOutlined />}></Button>
       </Col>
     </Row>

@@ -8,6 +8,7 @@ import { useMoney } from '@/settings';
 import { request } from '@/request';
 import useFetch from '@/hooks/useFetch';
 import useOnFetch from '@/hooks/useOnFetch';
+import useResponsive from '@/hooks/useResponsive';
 
 import RecentTable from './components/RecentTable';
 
@@ -22,6 +23,7 @@ export default function DashboardModule() {
   const translate = useLanguage();
   const { moneyFormatter } = useMoney();
   const money_format_settings = useSelector(selectMoneyFormat);
+  const { isMobile } = useResponsive();
 
   const getStatsData = async ({ entity, currency }) => {
     return await request.summary({
@@ -125,9 +127,11 @@ export default function DashboardModule() {
   });
 
   if (money_format_settings) {
+    const gutterSize = isMobile ? [12, 12] : [32, 32];
+
     return (
       <>
-        <Row gutter={[32, 32]}>
+        <Row gutter={gutterSize}>
           <SummaryCard
             title={translate('Invoices')}
             prefix={translate('This month')}
@@ -153,16 +157,16 @@ export default function DashboardModule() {
             data={invoiceResult?.total_undue}
           />
         </Row>
-        <div className="space30"></div>
-        <Row gutter={[32, 32]}>
-          <Col className="gutter-row w-full" sm={{ span: 24 }} md={{ span: 24 }} lg={{ span: 18 }}>
-            <div className="whiteBox shadow" style={{ height: 458 }}>
-              <Row className="pad20" gutter={[0, 0]}>
+        <div className={isMobile ? 'space20' : 'space30'}></div>
+        <Row gutter={gutterSize}>
+          <Col className="gutter-row w-full" xs={{ span: 24 }} sm={{ span: 24 }} md={{ span: 24 }} lg={{ span: 18 }}>
+            <div className="whiteBox shadow" style={{ height: isMobile ? 'auto' : 458, minHeight: isMobile ? 300 : 458 }}>
+              <Row className={isMobile ? 'pad15' : 'pad20'} gutter={[0, 0]}>
                 {statisticCards}
               </Row>
             </div>
           </Col>
-          <Col className="gutter-row w-full" sm={{ span: 24 }} md={{ span: 24 }} lg={{ span: 6 }}>
+          <Col className="gutter-row w-full" xs={{ span: 24 }} sm={{ span: 24 }} md={{ span: 24 }} lg={{ span: 6 }}>
             <CustomerPreviewCard
               isLoading={clientLoading}
               activeCustomer={clientResult?.active}
@@ -170,11 +174,11 @@ export default function DashboardModule() {
             />
           </Col>
         </Row>
-        <div className="space30"></div>
-        <Row gutter={[32, 32]}>
-          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 12 }}>
-            <div className="whiteBox shadow pad20" style={{ height: '100%' }}>
-              <h3 style={{ color: '#22075e', marginBottom: 5, padding: '0 20px 20px' }}>
+        <div className={isMobile ? 'space20' : 'space30'}></div>
+        <Row gutter={gutterSize}>
+          <Col className="gutter-row w-full" xs={{ span: 24 }} sm={{ span: 24 }} lg={{ span: 12 }}>
+            <div className="whiteBox shadow" style={{ height: '100%', padding: isMobile ? '12px' : '20px' }}>
+              <h3 style={{ color: '#22075e', marginBottom: 5, padding: isMobile ? '0 8px 12px' : '0 20px 20px' }}>
                 {translate('Recent Invoices')}
               </h3>
 
@@ -182,9 +186,9 @@ export default function DashboardModule() {
             </div>
           </Col>
 
-          <Col className="gutter-row w-full" sm={{ span: 24 }} lg={{ span: 12 }}>
-            <div className="whiteBox shadow pad20" style={{ height: '100%' }}>
-              <h3 style={{ color: '#22075e', marginBottom: 5, padding: '0 20px 20px' }}>
+          <Col className="gutter-row w-full" xs={{ span: 24 }} sm={{ span: 24 }} lg={{ span: 12 }}>
+            <div className="whiteBox shadow" style={{ height: '100%', padding: isMobile ? '12px' : '20px' }}>
+              <h3 style={{ color: '#22075e', marginBottom: 5, padding: isMobile ? '0 8px 12px' : '0 20px 20px' }}>
                 {translate('Recent Quotes')}
               </h3>
               <RecentTable entity={'quote'} dataTableColumns={dataTableColumns} />

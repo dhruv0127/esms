@@ -218,7 +218,14 @@ function MobileSidebar() {
         size="large"
         onClick={showDrawer}
         className="mobile-sidebar-btn"
-        style={{ ['marginLeft']: 25 }}
+        style={{
+          position: 'fixed',
+          top: 12,
+          left: 12,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}
       >
         <MenuOutlined style={{ fontSize: 18 }} />
       </Button>

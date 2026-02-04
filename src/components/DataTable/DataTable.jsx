@@ -9,7 +9,7 @@ import {
   ArrowRightOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Table, Button, Input } from 'antd';
+import { Dropdown, Table, Button, Input, Pagination } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -18,10 +18,12 @@ import { selectListItems } from '@/redux/crud/selectors';
 import useLanguage from '@/locale/useLanguage';
 import { dataForTable } from '@/utils/dataStructure';
 import { useMoney, useDate } from '@/settings';
+import useResponsive from '@/hooks/useResponsive';
 
 import { generate as uniqueId } from 'shortid';
 
 import { useCrudContext } from '@/context/crud';
+import MobileCardView from './MobileCardView';
 
 function AddNewItem({ config }) {
   const { crudContextAction } = useCrudContext();
@@ -46,6 +48,7 @@ export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
   const { moneyFormatter } = useMoney();
   const { dateFormat } = useDate();
+  const { isMobile } = useResponsive();
 
   const items = [
     {
@@ -187,7 +190,7 @@ export default function DataTable({ config, extra = [] }) {
         backIcon={<ArrowLeftOutlined />}
         title={DATATABLE_TITLE}
         ghost={false}
-        extra={[
+        extra={isMobile ? undefined : [
           <Input
             key={`searchFilterDataTable}`}
             onChange={filterTable}
@@ -201,19 +204,63 @@ export default function DataTable({ config, extra = [] }) {
           <AddNewItem key={`${uniqueId()}`} config={config} />,
         ]}
         style={{
-          padding: '20px 0px',
+          padding: isMobile ? '12px 0px' : '20px 0px',
         }}
       ></PageHeader>
 
-      <Table
-        columns={dataTableColumns}
-        rowKey={(item) => item._id}
-        dataSource={dataSource}
-        pagination={pagination}
-        loading={listIsLoading}
-        onChange={handelDataTableLoad}
-        scroll={{ x: true }}
-      />
+      {isMobile && (
+        <div style={{ padding: '8px 0', marginBottom: 12 }}>
+          <Input
+            onChange={filterTable}
+            placeholder={translate('search')}
+            allowClear
+            size="small"
+            style={{ marginBottom: 8 }}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              onClick={handelDataTableLoad}
+              icon={<RedoOutlined />}
+              size="small"
+              style={{ flex: 1 }}
+            >
+              {translate('Refresh')}
+            </Button>
+            <AddNewItem config={config} />
+          </div>
+        </div>
+      )}
+
+      {isMobile ? (
+        <>
+          <MobileCardView
+            dataSource={dataSource}
+            columns={dispatchColumns}
+            onRead={handleRead}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            extraActions={extra}
+            loading={listIsLoading}
+          />
+          <Pagination
+            {...pagination}
+            onChange={(page, pageSize) => handelDataTableLoad({ current: page, pageSize })}
+            style={{ marginTop: 16, textAlign: 'center' }}
+            size="small"
+            showSizeChanger={false}
+          />
+        </>
+      ) : (
+        <Table
+          columns={dataTableColumns}
+          rowKey={(item) => item._id}
+          dataSource={dataSource}
+          pagination={pagination}
+          loading={listIsLoading}
+          onChange={handelDataTableLoad}
+          scroll={{ x: true }}
+        />
+      )}
     </>
   );
 }

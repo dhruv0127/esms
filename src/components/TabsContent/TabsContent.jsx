@@ -1,28 +1,33 @@
 import { Tabs, Row, Col } from 'antd';
+import useResponsive from '@/hooks/useResponsive';
 
 const SettingsLayout = ({ children }) => {
+  const { isMobile } = useResponsive();
+
   return (
     <Col className="gutter-row" order={0}>
-      <div className="whiteBox shadow" style={{ minHeight: '480px' }}>
-        <div className="pad40">{children}</div>
+      <div className="whiteBox shadow" style={{ minHeight: isMobile ? '300px' : '480px' }}>
+        <div className={isMobile ? 'pad15' : 'pad40'}>{children}</div>
       </div>
     </Col>
   );
 };
 
 const TopCard = ({ pageTitle }) => {
+  const { isMobile } = useResponsive();
+
   return (
     <div
       className="whiteBox shadow"
       style={{
         color: '#595959',
-        fontSize: 13,
-        height: '70px',
+        fontSize: isMobile ? 12 : 13,
+        height: isMobile ? '50px' : '70px',
         minHeight: 'auto',
-        marginBottom: '24px',
+        marginBottom: isMobile ? '12px' : '24px',
       }}
     >
-      <div className="pad20 strong" style={{ textAlign: 'center', justifyContent: 'center' }}>
+      <div className={isMobile ? 'pad10 strong' : 'pad20 strong'} style={{ textAlign: 'center', justifyContent: 'center' }}>
         <h2 style={{ color: '#22075e', marginBottom: 0, marginTop: 0 }}>{pageTitle}</h2>
       </div>
     </div>
@@ -30,6 +35,8 @@ const TopCard = ({ pageTitle }) => {
 };
 
 const RightMenu = ({ children, pageTitle }) => {
+  const { isMobile } = useResponsive();
+
   return (
     <Col
       className="gutter-row"
@@ -41,7 +48,7 @@ const RightMenu = ({ children, pageTitle }) => {
     >
       <TopCard pageTitle={pageTitle} />
       <div className="whiteBox shadow">
-        <div className="pad25" style={{ width: '100%', paddingBottom: 0 }}>
+        <div className={isMobile ? 'pad15' : 'pad25'} style={{ width: '100%', paddingBottom: 0 }}>
           {children}
         </div>
       </div>
@@ -50,12 +57,14 @@ const RightMenu = ({ children, pageTitle }) => {
 };
 
 export default function TabsContent({ content, defaultActiveKey, pageTitle }) {
+  const { isMobile } = useResponsive();
+
   const items = content.map((item, index) => {
     return {
       key: item.key ? item.key : index + '_' + item.label.replace(/ /g, '_'),
       label: (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {item.icon} <span style={{ paddingRight: 30 }}>{item.label}</span>
+          {item.icon} <span style={{ paddingRight: isMobile ? 10 : 30 }}>{item.label}</span>
         </div>
       ),
       children: <SettingsLayout>{item.children}</SettingsLayout>,
@@ -69,13 +78,13 @@ export default function TabsContent({ content, defaultActiveKey, pageTitle }) {
   );
 
   return (
-    <Row gutter={[24, 24]} className="tabContent">
+    <Row gutter={isMobile ? [12, 12] : [24, 24]} className="tabContent">
       <Tabs
-        tabPosition="right"
+        tabPosition={isMobile ? 'top' : 'right'}
         defaultActiveKey={defaultActiveKey}
         hideAdd={true}
         items={items}
-        renderTabBar={renderTabBar}
+        renderTabBar={isMobile ? undefined : renderTabBar}
       />
     </Row>
   );

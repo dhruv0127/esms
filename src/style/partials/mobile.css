@@ -1,0 +1,293 @@
+/* Mobile Responsive Styles */
+
+/* Mobile breakpoint: screens smaller than 768px */
+@media only screen and (max-width: 767px) {
+  /* Typography - Mobile specific font sizes */
+  h1, .ant-typography h1, .ant-page-header-heading-title {
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+  }
+
+  h2, .ant-typography h2 {
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+  }
+
+  h3, .ant-typography h3 {
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+  }
+
+  h4, .ant-typography h4 {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+
+  h5, .ant-typography h5, h6, .ant-typography h6 {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Body and paragraph text */
+  body, p, .ant-typography, .ant-typography p, span, div,
+  .ant-form-item-label > label, .ant-input, .ant-select-selection-item,
+  .ant-table, .ant-btn, .ant-menu-item, .ant-descriptions-item-content,
+  .ant-statistic-content, td, th {
+    font-size: 12px !important;
+  }
+
+  /* Layout adjustments */
+  .layoutPadding {
+    padding: 20px 12px !important;
+  }
+
+  .dashboardSpacing {
+    padding: 16px 12px !important;
+    margin: 60px auto 20px !important;
+  }
+
+  /* Reduce padding classes for mobile */
+  .pad40, .pad33, .pad30 {
+    padding: 16px !important;
+  }
+
+  .pad25, .pad20 {
+    padding: 12px !important;
+  }
+
+  .pad15 {
+    padding: 10px !important;
+  }
+
+  .pad10 {
+    padding: 8px !important;
+  }
+
+  /* Reduce margin classes for mobile */
+  .mrg30, .mrg25, .mrg20 {
+    margin: 12px !important;
+  }
+
+  .mrg15 {
+    margin: 10px !important;
+  }
+
+  .mrg10 {
+    margin: 8px !important;
+  }
+
+  /* Ant Design component specific mobile styles */
+  .ant-card {
+    margin-bottom: 12px !important;
+  }
+
+  .ant-card-head-title {
+    font-size: 16px !important;
+    padding: 12px 0 !important;
+  }
+
+  .ant-card-body {
+    padding: 12px !important;
+  }
+
+  .ant-page-header {
+    padding: 12px !important;
+  }
+
+  .ant-page-header-heading {
+    flex-wrap: wrap;
+  }
+
+  .ant-page-header-heading-extra {
+    margin-top: 12px;
+    width: 100%;
+  }
+
+  /* Form adjustments */
+  .ant-form-item {
+    margin-bottom: 12px !important;
+  }
+
+  .ant-form-item-label {
+    padding-bottom: 4px !important;
+  }
+
+  /* Button adjustments */
+  .ant-btn {
+    padding: 4px 12px !important;
+    height: auto !important;
+    min-height: 32px;
+  }
+
+  .ant-btn-lg {
+    padding: 6px 14px !important;
+    min-height: 36px;
+  }
+
+  .ant-btn-sm {
+    padding: 2px 8px !important;
+    min-height: 24px;
+  }
+
+  /* Table responsive */
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .ant-table {
+    min-width: 600px;
+  }
+
+  .ant-table-thead > tr > th {
+    padding: 8px !important;
+  }
+
+  .ant-table-tbody > tr > td {
+    padding: 8px !important;
+  }
+
+  /* Modal adjustments */
+  .ant-modal {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+  }
+
+  .ant-modal-header {
+    padding: 12px 16px !important;
+  }
+
+  .ant-modal-body {
+    padding: 16px !important;
+  }
+
+  .ant-modal-footer {
+    padding: 10px 16px !important;
+  }
+
+  /* Drawer adjustments */
+  .ant-drawer-header {
+    padding: 12px 16px !important;
+  }
+
+  .ant-drawer-body {
+    padding: 16px !important;
+  }
+
+  /* Stats and descriptions */
+  .ant-statistic {
+    margin-bottom: 12px;
+  }
+
+  .ant-statistic-title {
+    font-size: 12px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .ant-statistic-content {
+    font-size: 16px !important;
+  }
+
+  .ant-descriptions-item-label {
+    padding: 8px 12px !important;
+  }
+
+  .ant-descriptions-item-content {
+    padding: 8px 12px !important;
+  }
+
+  /* Space components */
+  .space70, .space60, .space50 {
+    height: 20px !important;
+  }
+
+  .space40, .space30 {
+    height: 16px !important;
+  }
+
+  .space20 {
+    height: 12px !important;
+  }
+
+  /* Row and Col gutters */
+  .ant-row {
+    margin-left: -6px !important;
+    margin-right: -6px !important;
+  }
+
+  .ant-col {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  /* Select and input adjustments */
+  .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+    padding: 4px 8px !important;
+  }
+
+  .ant-input {
+    padding: 4px 8px !important;
+  }
+
+  .ant-input-number {
+    width: 100% !important;
+  }
+
+  /* Menu items */
+  .ant-menu-item {
+    padding: 0 12px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+  }
+
+  /* Breadcrumb */
+  .ant-breadcrumb {
+    font-size: 12px !important;
+  }
+
+  /* Tags */
+  .ant-tag {
+    font-size: 11px !important;
+    padding: 0 6px !important;
+  }
+
+  /* Notification and Message */
+  .ant-notification {
+    margin-right: 12px !important;
+  }
+
+  .ant-message {
+    font-size: 12px !important;
+  }
+
+  /* Tabs */
+  .ant-tabs-tab {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* Steps */
+  .ant-steps-item-title {
+    font-size: 12px !important;
+  }
+
+  .ant-steps-item-description {
+    font-size: 11px !important;
+  }
+
+  /* Hide elements on mobile if needed */
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  /* Show only on mobile */
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+/* Desktop: hide mobile-only elements */
+@media only screen and (min-width: 768px) {
+  .mobile-only {
+    display: none !important;
+  }
+}

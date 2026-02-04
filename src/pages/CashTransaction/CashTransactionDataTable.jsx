@@ -8,7 +8,7 @@ import {
   ArrowLeftOutlined,
   FilterOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Table, Button, Input, Select, Space, DatePicker } from 'antd';
+import { Dropdown, Table, Button, Input, Select, Space, DatePicker, Pagination } from 'antd';
 import { PageHeader } from '@ant-design/pro-layout';
 import dayjs from 'dayjs';
 
@@ -16,10 +16,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { crud } from '@/redux/crud/actions';
 import { selectListItems } from '@/redux/crud/selectors';
 import useLanguage from '@/locale/useLanguage';
+import useResponsive from '@/hooks/useResponsive';
 
 import { generate as uniqueId } from 'shortid';
 
 import { useCrudContext } from '@/context/crud';
+import MobileCardView from '@/components/DataTable/MobileCardView';
 
 function AddNewItem({ config }) {
   const { crudContextAction } = useCrudContext();
@@ -43,6 +45,7 @@ export default function CashTransactionDataTable({ config, extra = [] }) {
   const { crudContextAction } = useCrudContext();
   const { panel, collapsedBox, modal, readBox, editBox } = crudContextAction;
   const translate = useLanguage();
+  const { isMobile } = useResponsive();
 
   const [typeFilter, setTypeFilter] = useState(null);
   const [partyTypeFilter, setPartyTypeFilter] = useState(null);
@@ -93,6 +96,9 @@ export default function CashTransactionDataTable({ config, extra = [] }) {
     dispatch(crud.currentAction({ actionType: 'delete', data: record }));
     modal.open();
   }
+
+  // Store original columns without action column for mobile view
+  const originalColumns = [...dataTableColumns];
 
   const columnsWithActions = [
     ...dataTableColumns,
@@ -244,7 +250,7 @@ export default function CashTransactionDataTable({ config, extra = [] }) {
         backIcon={<ArrowLeftOutlined />}
         title={DATATABLE_TITLE}
         ghost={false}
-        extra={[
+        extra={isMobile ? undefined : [
           <Input
             key={`searchFilterDataTable}`}
             onChange={filterTable}
@@ -258,70 +264,183 @@ export default function CashTransactionDataTable({ config, extra = [] }) {
           <AddNewItem key={`${uniqueId()}`} config={config} />,
         ]}
         style={{
-          padding: '20px 0px',
+          padding: isMobile ? '12px 0px' : '20px 0px',
         }}
       >
-        <Space wrap style={{ marginTop: 16 }}>
-          <Select
-            placeholder="Filter by Type"
-            allowClear
-            style={{ width: 180 }}
-            value={typeFilter}
-            onChange={handleTypeFilterChange}
-            options={[
-              { label: 'Cash In', value: 'in' },
-              { label: 'Cash Out', value: 'out' },
-            ]}
-          />
-          <Select
-            placeholder="Filter by Party Type"
-            allowClear
-            style={{ width: 180 }}
-            value={partyTypeFilter}
-            onChange={handlePartyTypeFilterChange}
-            options={[
-              { label: 'Client', value: 'client' },
-              { label: 'Supplier', value: 'supplier' },
-            ]}
-          />
-          <RangePicker
-            placeholder={['Start Date', 'End Date']}
-            style={{ width: 280 }}
-            value={dateRange}
-            onChange={handleDateRangeChange}
-            format="YYYY-MM-DD"
-          />
-          <Select
-            placeholder="Sort by"
-            allowClear
-            style={{ width: 200 }}
-            value={sortField && sortOrder ? `${sortField}-${sortOrder}` : null}
-            onChange={handleSortChange}
-            options={[
-              { label: 'Date (Newest First)', value: 'date-desc' },
-              { label: 'Date (Oldest First)', value: 'date-asc' },
-              { label: 'Amount (High to Low)', value: 'amount-desc' },
-              { label: 'Amount (Low to High)', value: 'amount-asc' },
-              { label: 'Type (A-Z)', value: 'type-asc' },
-              { label: 'Type (Z-A)', value: 'type-desc' },
-            ]}
-          />
-          <Button type="primary" icon={<FilterOutlined />} onClick={applyFilters}>
-            Apply Filters
-          </Button>
-          <Button onClick={clearFilters}>Clear Filters</Button>
-        </Space>
+        {!isMobile && (
+          <Space wrap style={{ marginTop: 16 }}>
+            <Select
+              placeholder="Filter by Type"
+              allowClear
+              style={{ width: 180 }}
+              value={typeFilter}
+              onChange={handleTypeFilterChange}
+              options={[
+                { label: 'Cash In', value: 'in' },
+                { label: 'Cash Out', value: 'out' },
+              ]}
+            />
+            <Select
+              placeholder="Filter by Party Type"
+              allowClear
+              style={{ width: 180 }}
+              value={partyTypeFilter}
+              onChange={handlePartyTypeFilterChange}
+              options={[
+                { label: 'Client', value: 'client' },
+                { label: 'Supplier', value: 'supplier' },
+              ]}
+            />
+            <RangePicker
+              placeholder={['Start Date', 'End Date']}
+              style={{ width: 280 }}
+              value={dateRange}
+              onChange={handleDateRangeChange}
+              format="YYYY-MM-DD"
+            />
+            <Select
+              placeholder="Sort by"
+              allowClear
+              style={{ width: 200 }}
+              value={sortField && sortOrder ? `${sortField}-${sortOrder}` : null}
+              onChange={handleSortChange}
+              options={[
+                { label: 'Date (Newest First)', value: 'date-desc' },
+                { label: 'Date (Oldest First)', value: 'date-asc' },
+                { label: 'Amount (High to Low)', value: 'amount-desc' },
+                { label: 'Amount (Low to High)', value: 'amount-asc' },
+                { label: 'Type (A-Z)', value: 'type-asc' },
+                { label: 'Type (Z-A)', value: 'type-desc' },
+              ]}
+            />
+            <Button type="primary" icon={<FilterOutlined />} onClick={applyFilters}>
+              Apply Filters
+            </Button>
+            <Button onClick={clearFilters}>Clear Filters</Button>
+          </Space>
+        )}
       </PageHeader>
 
-      <Table
-        columns={columnsWithActions}
-        rowKey={(item) => item._id}
-        dataSource={dataSource}
-        pagination={pagination}
-        loading={listIsLoading}
-        onChange={handelDataTableLoad}
-        scroll={{ x: true }}
-      />
+      {isMobile && (
+        <div style={{ padding: '8px 0', marginBottom: 12 }}>
+          <Input
+            onChange={filterTable}
+            placeholder={translate('search')}
+            allowClear
+            size="small"
+            style={{ marginBottom: 8 }}
+          />
+
+          <Space direction="vertical" style={{ width: '100%', marginBottom: 8 }}>
+            <Select
+              placeholder="Filter by Type"
+              allowClear
+              style={{ width: '100%' }}
+              size="small"
+              value={typeFilter}
+              onChange={handleTypeFilterChange}
+              options={[
+                { label: 'Cash In', value: 'in' },
+                { label: 'Cash Out', value: 'out' },
+              ]}
+            />
+            <Select
+              placeholder="Filter by Party Type"
+              allowClear
+              style={{ width: '100%' }}
+              size="small"
+              value={partyTypeFilter}
+              onChange={handlePartyTypeFilterChange}
+              options={[
+                { label: 'Client', value: 'client' },
+                { label: 'Supplier', value: 'supplier' },
+              ]}
+            />
+            <RangePicker
+              placeholder={['Start Date', 'End Date']}
+              style={{ width: '100%' }}
+              size="small"
+              value={dateRange}
+              onChange={handleDateRangeChange}
+              format="YYYY-MM-DD"
+            />
+            <Select
+              placeholder="Sort by"
+              allowClear
+              style={{ width: '100%' }}
+              size="small"
+              value={sortField && sortOrder ? `${sortField}-${sortOrder}` : null}
+              onChange={handleSortChange}
+              options={[
+                { label: 'Date (Newest First)', value: 'date-desc' },
+                { label: 'Date (Oldest First)', value: 'date-asc' },
+                { label: 'Amount (High to Low)', value: 'amount-desc' },
+                { label: 'Amount (Low to High)', value: 'amount-asc' },
+                { label: 'Type (A-Z)', value: 'type-asc' },
+                { label: 'Type (Z-A)', value: 'type-desc' },
+              ]}
+            />
+          </Space>
+
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <Button
+              type="primary"
+              icon={<FilterOutlined />}
+              onClick={applyFilters}
+              size="small"
+              style={{ flex: 1 }}
+            >
+              Apply
+            </Button>
+            <Button onClick={clearFilters} size="small" style={{ flex: 1 }}>
+              Clear
+            </Button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              onClick={handelDataTableLoad}
+              icon={<RedoOutlined />}
+              size="small"
+              style={{ flex: 1 }}
+            >
+              {translate('Refresh')}
+            </Button>
+            <AddNewItem config={config} />
+          </div>
+        </div>
+      )}
+
+      {isMobile ? (
+        <>
+          <MobileCardView
+            dataSource={dataSource}
+            columns={originalColumns}
+            onRead={handleRead}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            extraActions={extra}
+            loading={listIsLoading}
+          />
+          <Pagination
+            {...pagination}
+            onChange={(page, pageSize) => handelDataTableLoad({ current: page, pageSize })}
+            style={{ marginTop: 16, textAlign: 'center' }}
+            size="small"
+            showSizeChanger={false}
+          />
+        </>
+      ) : (
+        <Table
+          columns={columnsWithActions}
+          rowKey={(item) => item._id}
+          dataSource={dataSource}
+          pagination={pagination}
+          loading={listIsLoading}
+          onChange={handelDataTableLoad}
+          scroll={{ x: true }}
+        />
+      )}
     </>
   );
 }

@@ -2,6 +2,7 @@ import { Dropdown, Table } from 'antd';
 
 import { request } from '@/request';
 import useFetch from '@/hooks/useFetch';
+import useResponsive from '@/hooks/useResponsive';
 
 import { EllipsisOutlined, EyeOutlined, EditOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
@@ -9,9 +10,11 @@ import { erp } from '@/redux/erp/actions';
 import useLanguage from '@/locale/useLanguage';
 import { useNavigate } from 'react-router-dom';
 import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import MobileCardView from '@/components/DataTable/MobileCardView';
 
 export default function RecentTable({ ...props }) {
   const translate = useLanguage();
+  const { isMobile } = useResponsive();
   let { entity, dataTableColumns } = props;
 
   const items = [
@@ -46,6 +49,9 @@ export default function RecentTable({ ...props }) {
   const handleDownload = (record) => {
     window.open(`${DOWNLOAD_BASE_URL}${entity}/${entity}-${record._id}.pdf`, '_blank');
   };
+
+  // Store original columns without action column for mobile view
+  const originalColumns = [...dataTableColumns];
 
   dataTableColumns = [
     ...dataTableColumns,
@@ -93,7 +99,24 @@ export default function RecentTable({ ...props }) {
     return [];
   };
 
-  return (
+  return isMobile ? (
+    <MobileCardView
+      dataSource={isSuccess ? firstFiveItems() : []}
+      columns={originalColumns}
+      onRead={handleRead}
+      onEdit={handleEdit}
+      onDelete={() => {}}
+      extraActions={[
+        {
+          label: translate('Download'),
+          key: 'download',
+          icon: <FilePdfOutlined />,
+          onClick: handleDownload,
+        },
+      ]}
+      loading={isLoading}
+    />
+  ) : (
     <Table
       columns={dataTableColumns}
       rowKey={(item) => item._id}
