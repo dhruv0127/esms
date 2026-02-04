@@ -1,5 +1,5 @@
 import { Space, Layout, Divider, Typography } from 'antd';
-import logo from '@/assets/images/kreddo-logo.png';
+// import logo from '@/assets/images/kreddo-logo.png';
 import useLanguage from '@/locale/useLanguage';
 import { useSelector } from 'react-redux';
 
@@ -20,13 +20,18 @@ export default function SideContent() {
       className="sideContent"
     >
       <div style={{ width: '100%' }}>
-        <img
-          src={logo}
-          alt="Kreddo ERP CRM"
+        <div
           style={{ margin: '0 0 40px', display: 'block' }}
-          height={63}
-          width={220}
-        />
+        >
+          <span style={{
+            fontSize: '48px',
+            fontWeight: '700',
+            color: '#1890ff',
+            letterSpacing: '1px',
+          }}>
+            Kreddo
+          </span>
+        </div>
 
         <Title level={1} style={{ fontSize: 28 }}>
           Free Open Source ERP / CRM

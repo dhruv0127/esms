@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Kreddo Favicon</title>
+</head>
+<body>
+    <h2>Kreddo Favicon Generator</h2>
+    <canvas id="canvas32" width="32" height="32" style="border: 1px solid #ccc; image-rendering: pixelated; width: 128px; height: 128px;"></canvas>
+    <br><br>
+    <button onclick="downloadFavicon()">Download favicon.ico</button>
+    <br><br>
+    <p>Instructions:</p>
+    <ol>
+        <li>Open this file in a browser</li>
+        <li>Click "Download favicon.ico"</li>
+        <li>Replace the existing favicon.ico in src/ folder</li>
+    </ol>
+
+    <script>
+        // Draw 32x32 favicon
+        const canvas = document.getElementById('canvas32');
+        const ctx = canvas.getContext('2d');
+
+        // Background - Blue
+        ctx.fillStyle = '#1890ff';
+        ctx.fillRect(0, 0, 32, 32);
+
+        // Letter K - White
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('K', 16, 17);
+
+        function downloadFavicon() {
+            // Convert canvas to blob
+            canvas.toBlob(function(blob) {
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'favicon-32x32.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('PNG downloaded! For .ico conversion:\n\n1. Go to https://favicon.io/favicon-converter/\n2. Upload the downloaded PNG\n3. Download the generated favicon.ico\n4. Replace src/favicon.ico with the new file');
+            });
+        }
+
+        // Auto-generate on load
+        console.log('Favicon canvas ready!');
+    </script>
+</body>
+</html>

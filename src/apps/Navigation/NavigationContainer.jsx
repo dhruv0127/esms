@@ -5,7 +5,7 @@ import { Button, Drawer, Layout, Menu } from 'antd';
 import { useAppContext } from '@/context/appContext';
 
 import useLanguage from '@/locale/useLanguage';
-import logoIcon from '@/assets/images/kreddo-logo.png';
+// import logoIcon from '@/assets/images/kreddo-logo.png';
 // import logoText from '@/assets/images/logo-text.svg';
 
 import useResponsive from '@/hooks/useResponsive';
@@ -185,9 +185,20 @@ function Sidebar({ collapsible, isMobile = false }) {
         onClick={() => navigate('/')}
         style={{
           cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px 0',
         }}
       >
-        <img src={logoIcon} alt="Logo" style={{ marginLeft: '-5px', height: '40px' }} />
+        <span style={{
+          fontSize: '28px',
+          fontWeight: '700',
+          color: '#1890ff',
+          letterSpacing: '1px',
+        }}>
+          Kreddo
+        </span>
       </div>
       <Menu
         items={items}
