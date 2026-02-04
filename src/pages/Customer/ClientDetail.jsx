@@ -328,6 +328,207 @@ export default function ClientDetail() {
     },
   ];
 
+  const fullLogsColumns = [
+    {
+      title: translate('Date'),
+      dataIndex: 'date',
+      key: 'date',
+      render: (date) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: translate('Type'),
+      dataIndex: 'displayType',
+      key: 'displayType',
+      render: (displayType, record) => {
+        let color = 'default';
+        if (displayType === 'Invoice') color = 'blue';
+        else if (displayType === 'Cash In') color = 'green';
+        else if (displayType === 'Cash Out') color = 'red';
+        else if (displayType === 'Return') color = 'purple';
+        else if (displayType === 'Exchange') color = 'cyan';
+        return <Tag color={color}>{displayType}</Tag>;
+      },
+      filters: [
+        { text: 'Invoice', value: 'Invoice' },
+        { text: 'Cash In', value: 'Cash In' },
+        { text: 'Cash Out', value: 'Cash Out' },
+        { text: 'Return', value: 'Return' },
+        { text: 'Exchange', value: 'Exchange' },
+      ],
+      onFilter: (value, record) => record.displayType === value,
+    },
+    {
+      title: translate('Reference'),
+      key: 'reference',
+      render: (_, record) => {
+        if (record.transactionType === 'invoice') {
+          return (
+            <Button
+              type="link"
+              onClick={() => navigate(`/invoice/read/${record._id}`)}
+            >
+              Invoice #{record.number}
+            </Button>
+          );
+        }
+        if (record.transactionType === 'returnexchange') {
+          return (
+            <Button
+              type="link"
+              onClick={() => navigate(`/returnexchange/read/${record._id}`)}
+            >
+              {record.type === 'return' ? 'Return' : 'Exchange'} #{record.number}/{record.year}
+            </Button>
+          );
+        }
+        if (record.transactionType === 'cash') {
+          return (
+            <span>
+              {record.reference || 'Cash Transaction'}
+              {record.invoice && (
+                <>
+                  {' - '}
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={() => navigate(`/invoice/read/${record.invoice._id}`)}
+                  >
+                    Invoice #{record.invoice.number}
+                  </Button>
+                </>
+              )}
+            </span>
+          );
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Description'),
+      key: 'description',
+      render: (_, record) => {
+        if (record.transactionType === 'invoice') {
+          const itemCount = record.items?.length || 0;
+          return `Invoice with ${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+        }
+        if (record.transactionType === 'returnexchange') {
+          return record.reason || `${record.type === 'return' ? 'Return' : 'Exchange'} - ${record.returnedItem?.itemName || 'Item'}`;
+        }
+        if (record.transactionType === 'cash') {
+          return record.description || '-';
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Amount'),
+      dataIndex: 'amount',
+      key: 'amount',
+      align: 'right',
+      render: (amount, record) => {
+        let displayAmount = amount;
+        let prefix = '';
+        let color = '#000';
+
+        if (record.transactionType === 'cash') {
+          if (record.type === 'out') {
+            prefix = '-';
+            color = '#ff4d4f';
+          } else {
+            prefix = '+';
+            color = '#52c41a';
+          }
+        } else if (record.transactionType === 'returnexchange' && record.type === 'return') {
+          prefix = '-';
+          color = '#ff4d4f';
+        }
+
+        return (
+          <span style={{ color, fontWeight: '500' }}>
+            {prefix}{money.currency_symbol}{displayAmount.toFixed(2)}
+          </span>
+        );
+      },
+      sorter: (a, b) => a.amount - b.amount,
+    },
+    {
+      title: translate('Paid/Received'),
+      key: 'relatedAmount',
+      align: 'right',
+      render: (_, record) => {
+        if (record.transactionType === 'invoice') {
+          return `${money.currency_symbol}${record.relatedAmount.toFixed(2)}`;
+        }
+        if (record.transactionType === 'returnexchange' && record.type === 'exchange') {
+          const diff = record.relatedAmount;
+          if (diff === 0) return '-';
+          const color = diff > 0 ? '#ff4d4f' : '#52c41a';
+          return (
+            <span style={{ color }}>
+              {diff > 0 ? '+' : ''}{money.currency_symbol}{diff.toFixed(2)}
+            </span>
+          );
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Outstanding'),
+      key: 'balance',
+      align: 'right',
+      render: (_, record) => {
+        if (record.transactionType === 'invoice') {
+          const bal = record.balance;
+          if (bal === 0) return `${money.currency_symbol}0.00`;
+          const color = bal > 0 ? '#ff4d4f' : '#52c41a';
+          return (
+            <span style={{ color, fontWeight: 'bold' }}>
+              {money.currency_symbol}{bal.toFixed(2)}
+            </span>
+          );
+        }
+        if (record.transactionType === 'returnexchange') {
+          const bal = record.balance;
+          if (bal === 0) return `${money.currency_symbol}0.00`;
+          const color = bal > 0 ? '#ff4d4f' : '#52c41a';
+          return (
+            <span style={{ color }}>
+              {bal > 0 ? '+' : ''}{money.currency_symbol}{Math.abs(bal).toFixed(2)}
+            </span>
+          );
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Status'),
+      key: 'status',
+      render: (_, record) => {
+        if (record.transactionType === 'invoice') {
+          const status = record.paymentStatus;
+          let color = 'red';
+          if (status === 'paid') color = 'green';
+          if (status === 'partially') color = 'orange';
+          return <Tag color={color}>{status?.toUpperCase()}</Tag>;
+        }
+        if (record.transactionType === 'returnexchange') {
+          const status = record.status || 'pending';
+          let color = 'default';
+          if (status === 'completed') color = 'green';
+          else if (status === 'approved') color = 'blue';
+          else if (status === 'rejected') color = 'red';
+          return <Tag color={color}>{status.toUpperCase()}</Tag>;
+        }
+        if (record.transactionType === 'cash') {
+          return <Tag color="green">COMPLETED</Tag>;
+        }
+        return '-';
+      },
+    },
+  ];
+
   const cashColumns = [
     {
       title: translate('Date'),
@@ -402,6 +603,37 @@ export default function ClientDetail() {
 
   // Combine cash transactions with return/exchanges (for cash-related returns)
   const combinedCashData = [...cashTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Create full logs - all transactions combined
+  const fullLogs = [
+    ...invoices.map(inv => ({
+      ...inv,
+      transactionType: 'invoice',
+      displayType: 'Invoice',
+      date: inv.date,
+      amount: inv.total,
+      relatedAmount: inv.credit || 0,
+      balance: inv.total - (inv.credit || 0),
+    })),
+    ...cashTransactions.map(cash => ({
+      ...cash,
+      transactionType: 'cash',
+      displayType: cash.type === 'in' ? 'Cash In' : 'Cash Out',
+      date: cash.date,
+      amount: cash.amount,
+      relatedAmount: 0,
+      balance: 0,
+    })),
+    ...returnExchanges.map(re => ({
+      ...re,
+      transactionType: 'returnexchange',
+      displayType: re.type === 'return' ? 'Return' : 'Exchange',
+      date: re.date,
+      amount: re.returnedItem?.total || 0,
+      relatedAmount: re.type === 'exchange' ? (re.priceDifference || 0) : 0,
+      balance: re.type === 'return' ? -(re.returnedItem?.total || 0) : (re.priceDifference || 0),
+    })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Use backend balance if available, otherwise calculate locally
   const totalInvoiced = balance?.totalInvoiced || invoices.reduce((sum, inv) => sum + inv.total, 0);
@@ -529,6 +761,19 @@ export default function ClientDetail() {
               dataSource={client.customPricing || []}
               rowKey="product"
               pagination={{ pageSize: 10 }}
+            />
+          </TabPane>
+          <TabPane tab={`Full Logs (${fullLogs.length})`} key="4">
+            <Table
+              columns={fullLogsColumns}
+              dataSource={fullLogs}
+              rowKey={(record) => `${record.transactionType}-${record._id}`}
+              pagination={{
+                pageSize: 20,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} transactions`,
+              }}
+              scroll={{ x: 1200 }}
             />
           </TabPane>
         </Tabs>

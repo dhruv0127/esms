@@ -244,6 +244,142 @@ export default function SupplierDetail() {
     },
   ];
 
+  const fullLogsColumns = [
+    {
+      title: translate('Date'),
+      dataIndex: 'date',
+      key: 'date',
+      render: (date) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: translate('Type'),
+      dataIndex: 'displayType',
+      key: 'displayType',
+      render: (displayType) => {
+        let color = 'default';
+        if (displayType === 'Purchase') color = 'orange';
+        else if (displayType === 'Cash In') color = 'green';
+        else if (displayType === 'Cash Out') color = 'red';
+        return <Tag color={color}>{displayType}</Tag>;
+      },
+      filters: [
+        { text: 'Purchase', value: 'Purchase' },
+        { text: 'Cash In', value: 'Cash In' },
+        { text: 'Cash Out', value: 'Cash Out' },
+      ],
+      onFilter: (value, record) => record.displayType === value,
+    },
+    {
+      title: translate('Reference'),
+      key: 'reference',
+      render: (_, record) => {
+        if (record.transactionType === 'purchase') {
+          return (
+            <Button
+              type="link"
+              onClick={() => navigate(`/purchase/read/${record._id}`)}
+            >
+              Purchase #{record.number}
+            </Button>
+          );
+        }
+        if (record.transactionType === 'cash') {
+          return record.reference || 'Cash Transaction';
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Description'),
+      key: 'description',
+      render: (_, record) => {
+        if (record.transactionType === 'purchase') {
+          const itemCount = record.items?.length || 0;
+          return `Purchase with ${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+        }
+        if (record.transactionType === 'cash') {
+          return record.description || '-';
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Amount'),
+      dataIndex: 'amount',
+      key: 'amount',
+      align: 'right',
+      render: (amount, record) => {
+        let prefix = '';
+        let color = '#000';
+
+        if (record.transactionType === 'cash') {
+          if (record.type === 'out') {
+            prefix = '-';
+            color = '#ff4d4f';
+          } else {
+            prefix = '+';
+            color = '#52c41a';
+          }
+        }
+
+        return (
+          <span style={{ color, fontWeight: '500' }}>
+            {prefix}{money.currency_symbol}{amount.toFixed(2)}
+          </span>
+        );
+      },
+      sorter: (a, b) => a.amount - b.amount,
+    },
+    {
+      title: translate('Paid'),
+      key: 'relatedAmount',
+      align: 'right',
+      render: (_, record) => {
+        if (record.transactionType === 'purchase') {
+          return `${money.currency_symbol}${record.relatedAmount.toFixed(2)}`;
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Outstanding'),
+      key: 'balance',
+      align: 'right',
+      render: (_, record) => {
+        if (record.transactionType === 'purchase') {
+          const bal = record.balance;
+          if (bal === 0) return `${money.currency_symbol}0.00`;
+          const color = bal > 0 ? '#ff4d4f' : '#52c41a';
+          return (
+            <span style={{ color, fontWeight: 'bold' }}>
+              {money.currency_symbol}{bal.toFixed(2)}
+            </span>
+          );
+        }
+        return '-';
+      },
+    },
+    {
+      title: translate('Status'),
+      key: 'status',
+      render: (_, record) => {
+        if (record.transactionType === 'purchase') {
+          const status = record.paymentStatus;
+          let color = 'red';
+          if (status === 'paid') color = 'green';
+          if (status === 'partially') color = 'orange';
+          return <Tag color={color}>{status?.toUpperCase()}</Tag>;
+        }
+        if (record.transactionType === 'cash') {
+          return <Tag color="green">COMPLETED</Tag>;
+        }
+        return '-';
+      },
+    },
+  ];
+
   const cashColumns = [
     {
       title: translate('Date'),
@@ -292,6 +428,28 @@ export default function SupplierDetail() {
   if (!supplier) {
     return <div>Supplier not found</div>;
   }
+
+  // Create full logs - all transactions combined
+  const fullLogs = [
+    ...purchases.map(pur => ({
+      ...pur,
+      transactionType: 'purchase',
+      displayType: 'Purchase',
+      date: pur.date,
+      amount: pur.total,
+      relatedAmount: pur.credit || 0,
+      balance: pur.total - (pur.credit || 0),
+    })),
+    ...cashTransactions.map(cash => ({
+      ...cash,
+      transactionType: 'cash',
+      displayType: cash.type === 'in' ? 'Cash In' : 'Cash Out',
+      date: cash.date,
+      amount: cash.amount,
+      relatedAmount: 0,
+      balance: 0,
+    })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Calculate totals
   const totalPurchased = purchases.reduce((sum, pur) => sum + pur.total, 0);
@@ -406,6 +564,19 @@ export default function SupplierDetail() {
               dataSource={supplier.customPricing || []}
               rowKey="product"
               pagination={{ pageSize: 10 }}
+            />
+          </TabPane>
+          <TabPane tab={`Full Logs (${fullLogs.length})`} key="4">
+            <Table
+              columns={fullLogsColumns}
+              dataSource={fullLogs}
+              rowKey={(record) => `${record.transactionType}-${record._id}`}
+              pagination={{
+                pageSize: 20,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} transactions`,
+              }}
+              scroll={{ x: 1200 }}
             />
           </TabPane>
         </Tabs>
