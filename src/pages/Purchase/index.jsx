@@ -5,6 +5,7 @@ import { tagColor } from '@/utils/statusTagColor';
 
 import { useMoney, useDate } from '@/settings';
 import PurchaseDataTableModule from '@/modules/PurchaseModule/PurchaseDataTableModule';
+import { getAmountColor } from '@/utils/amountColor';
 
 export default function Purchase() {
   const translate = useLanguage();
@@ -69,7 +70,21 @@ export default function Purchase() {
           },
         };
       },
-      render: (total, record) => moneyFormatter({ amount: total, currency_code: record.currency }),
+      render: (credit, record) => {
+        const balance = record.total - (credit || 0);
+        return (
+          <span>
+            <span style={{ color: getAmountColor(credit || 0), fontWeight: '500' }}>
+              {moneyFormatter({ amount: credit || 0, currency_code: record.currency })}
+            </span>
+            {balance > 0 && (
+              <span style={{ fontSize: '11px', color: getAmountColor(-balance), marginLeft: '4px' }}>
+                ({moneyFormatter({ amount: balance, currency_code: record.currency })} due)
+              </span>
+            )}
+          </span>
+        );
+      },
     },
     {
       title: translate('Status'),

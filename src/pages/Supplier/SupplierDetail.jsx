@@ -7,6 +7,7 @@ import useLanguage from '@/locale/useLanguage';
 import { useMoney } from '@/settings';
 import dayjs from 'dayjs';
 import SelectInventoryItem from '@/components/SelectInventoryItem';
+import { getAmountColor } from '@/utils/amountColor';
 
 const { TabPane } = Tabs;
 
@@ -105,7 +106,11 @@ export default function SupplierDetail() {
       key: 'balance',
       render: (_, record) => {
         const balance = record.total - (record.credit || 0);
-        return `${money.currency_symbol}${balance.toFixed(2)}`;
+        return (
+          <span style={{ color: getAmountColor(-balance), fontWeight: balance !== 0 ? '500' : 'normal' }}>
+            {balance > 0 ? '-' : balance < 0 ? '+' : ''}{money.currency_symbol}{Math.abs(balance).toFixed(2)}
+          </span>
+        );
       },
     },
     {
@@ -312,20 +317,20 @@ export default function SupplierDetail() {
       align: 'right',
       render: (amount, record) => {
         let prefix = '';
-        let color = '#000';
+        let displayAmount = amount;
 
         if (record.transactionType === 'cash') {
           if (record.type === 'out') {
             prefix = '-';
-            color = '#ff4d4f';
+            displayAmount = -amount;
           } else {
             prefix = '+';
-            color = '#52c41a';
+            displayAmount = amount;
           }
         }
 
         return (
-          <span style={{ color, fontWeight: '500' }}>
+          <span style={{ color: getAmountColor(displayAmount), fontWeight: '500' }}>
             {prefix}{money.currency_symbol}{amount.toFixed(2)}
           </span>
         );
@@ -351,10 +356,10 @@ export default function SupplierDetail() {
         if (record.transactionType === 'purchase') {
           const bal = record.balance;
           if (bal === 0) return `${money.currency_symbol}0.00`;
-          const color = bal > 0 ? '#ff4d4f' : '#52c41a';
+          // Negative for supplier outstanding (we owe them)
           return (
-            <span style={{ color, fontWeight: 'bold' }}>
-              {money.currency_symbol}{bal.toFixed(2)}
+            <span style={{ color: getAmountColor(-bal), fontWeight: 'bold' }}>
+              {bal > 0 ? '-' : bal < 0 ? '+' : ''}{money.currency_symbol}{Math.abs(bal).toFixed(2)}
             </span>
           );
         }
@@ -502,7 +507,7 @@ export default function SupplierDetail() {
           <Card>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', color: '#888' }}>Total Paid</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'green' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: getAmountColor(totalPaid) }}>
                 {money.currency_symbol}
                 {totalPaid.toFixed(2)}
               </div>
@@ -513,9 +518,9 @@ export default function SupplierDetail() {
           <Card>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', color: '#888' }}>Balance Due</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'red' }}>
-                {money.currency_symbol}
-                {totalBalance.toFixed(2)}
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: getAmountColor(-totalBalance) }}>
+                {totalBalance > 0 ? '-' : totalBalance < 0 ? '+' : ''}{money.currency_symbol}
+                {Math.abs(totalBalance).toFixed(2)}
               </div>
             </div>
           </Card>

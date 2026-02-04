@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 
 import useLanguage from '@/locale/useLanguage';
 import { useMoney, useDate } from '@/settings';
+import { getAmountColor } from '@/utils/amountColor';
 
 export default function CashTransaction() {
   const translate = useLanguage();
@@ -28,7 +29,15 @@ export default function CashTransaction() {
     {
       title: translate('Amount'),
       dataIndex: 'amount',
-      render: (amount) => moneyFormatter({ amount }),
+      render: (amount, record) => {
+        const isPositive = record.type === 'in';
+        const displayAmount = isPositive ? amount : -amount;
+        return (
+          <span style={{ color: getAmountColor(displayAmount), fontWeight: '500' }}>
+            {isPositive ? '+' : '-'}{moneyFormatter({ amount })}
+          </span>
+        );
+      },
     },
     {
       title: translate('Date'),

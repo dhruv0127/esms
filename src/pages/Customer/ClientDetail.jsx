@@ -7,6 +7,7 @@ import useLanguage from '@/locale/useLanguage';
 import { useMoney } from '@/settings';
 import dayjs from 'dayjs';
 import SelectInventoryItem from '@/components/SelectInventoryItem';
+import { getAmountColor } from '@/utils/amountColor';
 
 const { TabPane } = Tabs;
 
@@ -161,16 +162,15 @@ export default function ClientDetail() {
         if (record.type === 'return') {
           const amount = record.returnedItem?.total || 0;
           return (
-            <span style={{ color: 'green' }}>
+            <span style={{ color: getAmountColor(-amount), fontWeight: '500' }}>
               -{money.currency_symbol}
               {amount.toFixed(2)}
             </span>
           );
         }
         if (record.type === 'exchange' && record.priceDifference) {
-          const color = record.priceDifference > 0 ? 'red' : 'green';
           return (
-            <span style={{ color }}>
+            <span style={{ color: getAmountColor(record.priceDifference), fontWeight: '500' }}>
               {record.priceDifference > 0 ? '+' : ''}
               {money.currency_symbol}
               {record.priceDifference.toFixed(2)}
@@ -181,7 +181,12 @@ export default function ClientDetail() {
           return `${money.currency_symbol}0.00`;
         }
         const balance = record.total - (record.credit || 0);
-        return `${money.currency_symbol}${balance.toFixed(2)}`;
+        return (
+          <span style={{ color: getAmountColor(balance), fontWeight: balance !== 0 ? '500' : 'normal' }}>
+            {balance > 0 ? '+' : ''}{money.currency_symbol}
+            {Math.abs(balance).toFixed(2)}
+          </span>
+        );
       },
     },
     {
@@ -430,24 +435,23 @@ export default function ClientDetail() {
       render: (amount, record) => {
         let displayAmount = amount;
         let prefix = '';
-        let color = '#000';
 
         if (record.transactionType === 'cash') {
           if (record.type === 'out') {
             prefix = '-';
-            color = '#ff4d4f';
+            displayAmount = -amount;
           } else {
             prefix = '+';
-            color = '#52c41a';
+            displayAmount = amount;
           }
         } else if (record.transactionType === 'returnexchange' && record.type === 'return') {
           prefix = '-';
-          color = '#ff4d4f';
+          displayAmount = -amount;
         }
 
         return (
-          <span style={{ color, fontWeight: '500' }}>
-            {prefix}{money.currency_symbol}{displayAmount.toFixed(2)}
+          <span style={{ color: getAmountColor(displayAmount), fontWeight: '500' }}>
+            {prefix}{money.currency_symbol}{amount.toFixed(2)}
           </span>
         );
       },
@@ -464,10 +468,9 @@ export default function ClientDetail() {
         if (record.transactionType === 'returnexchange' && record.type === 'exchange') {
           const diff = record.relatedAmount;
           if (diff === 0) return '-';
-          const color = diff > 0 ? '#ff4d4f' : '#52c41a';
           return (
-            <span style={{ color }}>
-              {diff > 0 ? '+' : ''}{money.currency_symbol}{diff.toFixed(2)}
+            <span style={{ color: getAmountColor(diff), fontWeight: '500' }}>
+              {diff > 0 ? '+' : ''}{money.currency_symbol}{Math.abs(diff).toFixed(2)}
             </span>
           );
         }
@@ -482,19 +485,17 @@ export default function ClientDetail() {
         if (record.transactionType === 'invoice') {
           const bal = record.balance;
           if (bal === 0) return `${money.currency_symbol}0.00`;
-          const color = bal > 0 ? '#ff4d4f' : '#52c41a';
           return (
-            <span style={{ color, fontWeight: 'bold' }}>
-              {money.currency_symbol}{bal.toFixed(2)}
+            <span style={{ color: getAmountColor(bal), fontWeight: 'bold' }}>
+              {bal > 0 ? '+' : ''}{money.currency_symbol}{Math.abs(bal).toFixed(2)}
             </span>
           );
         }
         if (record.transactionType === 'returnexchange') {
           const bal = record.balance;
           if (bal === 0) return `${money.currency_symbol}0.00`;
-          const color = bal > 0 ? '#ff4d4f' : '#52c41a';
           return (
-            <span style={{ color }}>
+            <span style={{ color: getAmountColor(bal), fontWeight: '500' }}>
               {bal > 0 ? '+' : ''}{money.currency_symbol}{Math.abs(bal).toFixed(2)}
             </span>
           );
@@ -688,7 +689,7 @@ export default function ClientDetail() {
           <Card>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', color: '#888' }}>Total Paid</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'green' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: getAmountColor(totalPaid) }}>
                 {money.currency_symbol}
                 {totalPaid.toFixed(2)}
               </div>
@@ -704,7 +705,7 @@ export default function ClientDetail() {
                 {totalReturns.toFixed(2)}
               </div>
               {totalExchangeDifference !== 0 && (
-                <div style={{ fontSize: '12px', color: totalExchangeDifference > 0 ? 'red' : 'green', marginTop: '4px' }}>
+                <div style={{ fontSize: '12px', color: getAmountColor(totalExchangeDifference), marginTop: '4px', fontWeight: '500' }}>
                   Exchange Adj: {totalExchangeDifference > 0 ? '+' : ''}
                   {money.currency_symbol}
                   {Math.abs(totalExchangeDifference).toFixed(2)}
@@ -717,8 +718,8 @@ export default function ClientDetail() {
           <Card>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', color: '#888' }}>Balance Due</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: totalBalance > 0 ? 'red' : 'green' }}>
-                {money.currency_symbol}
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: getAmountColor(totalBalance) }}>
+                {totalBalance > 0 ? '+' : totalBalance < 0 ? '-' : ''}{money.currency_symbol}
                 {Math.abs(totalBalance).toFixed(2)}
               </div>
               <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>

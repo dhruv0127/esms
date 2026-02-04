@@ -3,6 +3,7 @@ import { EyeOutlined, EditOutlined, DeleteOutlined, EllipsisOutlined } from '@an
 import useLanguage from '@/locale/useLanguage';
 import { useMoney, useDate } from '@/settings';
 import dayjs from 'dayjs';
+import { getAmountColor } from '@/utils/amountColor';
 
 export default function MobileCardView({
   dataSource,
@@ -72,8 +73,34 @@ export default function MobileCardView({
       return dayjs(value).format(dateFormat);
     }
 
-    // Handle money formatting
+    // Handle money formatting with color coding
     if (column.isMoney && value !== undefined) {
+      // Check if this is an amount that should be color-coded
+      const isAmountField = column.dataIndex === 'amount' ||
+                           column.dataIndex === 'balance' ||
+                           column.dataIndex === 'outstanding' ||
+                           column.key === 'balance' ||
+                           column.key === 'outstanding';
+
+      if (isAmountField) {
+        let displayValue = value;
+        let prefix = '';
+
+        // For cash transactions, determine sign based on type
+        if (record.type === 'in') {
+          prefix = '+';
+        } else if (record.type === 'out') {
+          prefix = '-';
+          displayValue = -value;
+        }
+
+        return (
+          <span style={{ color: getAmountColor(displayValue), fontWeight: '500' }}>
+            {prefix}{moneyFormatter({ amount: Math.abs(value), currency_code: record.currency })}
+          </span>
+        );
+      }
+
       return moneyFormatter({ amount: value, currency_code: record.currency });
     }
 

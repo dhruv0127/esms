@@ -13,6 +13,7 @@ import { request } from '@/request';
 import { useMoney, useDate } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
 import useResponsive from '@/hooks/useResponsive';
+import { getAmountColor } from '@/utils/amountColor';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -242,10 +243,9 @@ export default function Reports() {
       key: 'outstanding',
       align: 'right',
       render: (outstanding, record) => {
-        const color = outstanding > 0 ? '#52c41a' : outstanding < 0 ? '#ff4d4f' : '#666';
         return (
-          <span style={{ color, fontWeight: outstanding !== 0 ? 'bold' : 'normal' }}>
-            {moneyFormatter({ amount: Math.abs(outstanding), currency_code: record.currency })}
+          <span style={{ color: getAmountColor(outstanding), fontWeight: outstanding !== 0 ? 'bold' : 'normal' }}>
+            {outstanding > 0 ? '+' : outstanding < 0 ? '-' : ''}{moneyFormatter({ amount: Math.abs(outstanding), currency_code: record.currency })}
             {outstanding > 0 && ' (Receivable)'}
             {outstanding < 0 && ' (Payable)'}
           </span>
@@ -259,18 +259,17 @@ export default function Reports() {
       key: 'partyBalance',
       align: 'right',
       render: (partyBalance, record) => {
-        const color = partyBalance > 0 ? '#52c41a' : partyBalance < 0 ? '#ff4d4f' : '#666';
         return (
           <span
             style={{
-              color,
+              color: getAmountColor(partyBalance),
               fontWeight: 'bold',
               backgroundColor: partyBalance !== 0 ? (partyBalance > 0 ? '#f6ffed' : '#fff2f0') : 'transparent',
               padding: '2px 8px',
               borderRadius: '4px',
             }}
           >
-            {moneyFormatter({ amount: Math.abs(partyBalance), currency_code: record.currency })}
+            {partyBalance > 0 ? '+' : partyBalance < 0 ? '-' : ''}{moneyFormatter({ amount: Math.abs(partyBalance), currency_code: record.currency })}
             {partyBalance > 0 && ' (To Receive)'}
             {partyBalance < 0 && ' (To Pay)'}
           </span>
@@ -349,13 +348,13 @@ export default function Reports() {
                     title="Paid"
                     value={reportData.summary.invoices.paidAmount}
                     precision={2}
-                    valueStyle={{ fontSize: 14, color: '#52c41a', marginTop: 4 }}
+                    valueStyle={{ fontSize: 14, color: getAmountColor(reportData.summary.invoices.paidAmount), marginTop: 4 }}
                   />
                   <Statistic
                     title="Unpaid"
                     value={reportData.summary.invoices.unpaidAmount}
                     precision={2}
-                    valueStyle={{ fontSize: 14, color: '#ff4d4f', marginTop: 4 }}
+                    valueStyle={{ fontSize: 14, color: getAmountColor(-reportData.summary.invoices.unpaidAmount), marginTop: 4 }}
                   />
                 </Card>
               </Col>
@@ -376,13 +375,13 @@ export default function Reports() {
                     title="Paid"
                     value={reportData.summary.purchases.paidAmount}
                     precision={2}
-                    valueStyle={{ fontSize: 14, color: '#52c41a', marginTop: 4 }}
+                    valueStyle={{ fontSize: 14, color: getAmountColor(reportData.summary.purchases.paidAmount), marginTop: 4 }}
                   />
                   <Statistic
                     title="Unpaid"
                     value={reportData.summary.purchases.unpaidAmount}
                     precision={2}
-                    valueStyle={{ fontSize: 14, color: '#ff4d4f', marginTop: 4 }}
+                    valueStyle={{ fontSize: 14, color: getAmountColor(-reportData.summary.purchases.unpaidAmount), marginTop: 4 }}
                   />
                 </Card>
               </Col>
@@ -398,14 +397,14 @@ export default function Reports() {
                     value={reportData.summary.cashTransactions.cashIn}
                     precision={2}
                     prefix={<ArrowUpOutlined />}
-                    valueStyle={{ fontSize: 16, color: '#52c41a', marginTop: 8 }}
+                    valueStyle={{ fontSize: 16, color: getAmountColor(reportData.summary.cashTransactions.cashIn), marginTop: 8 }}
                   />
                   <Statistic
                     title="Cash Out"
                     value={reportData.summary.cashTransactions.cashOut}
                     precision={2}
                     prefix={<ArrowDownOutlined />}
-                    valueStyle={{ fontSize: 16, color: '#ff4d4f', marginTop: 4 }}
+                    valueStyle={{ fontSize: 16, color: getAmountColor(-reportData.summary.cashTransactions.cashOut), marginTop: 4 }}
                   />
                   <Statistic
                     title="Net Cash Flow"
@@ -413,8 +412,7 @@ export default function Reports() {
                     precision={2}
                     valueStyle={{
                       fontSize: 16,
-                      color:
-                        reportData.summary.cashTransactions.netCash >= 0 ? '#52c41a' : '#ff4d4f',
+                      color: getAmountColor(reportData.summary.cashTransactions.netCash),
                       marginTop: 4,
                     }}
                   />
@@ -470,8 +468,8 @@ export default function Reports() {
                         <Col span={24}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ fontWeight: 500, color: '#666', fontSize: 11 }}>Outstanding:</span>
-                            <span style={{ fontSize: 12, color: record.outstanding > 0 ? '#52c41a' : record.outstanding < 0 ? '#ff4d4f' : '#666' }}>
-                              {moneyFormatter({ amount: Math.abs(record.outstanding), currency_code: record.currency })}
+                            <span style={{ fontSize: 12, color: getAmountColor(record.outstanding) }}>
+                              {record.outstanding > 0 ? '+' : record.outstanding < 0 ? '-' : ''}{moneyFormatter({ amount: Math.abs(record.outstanding), currency_code: record.currency })}
                               {record.outstanding > 0 && ' (Receivable)'}
                               {record.outstanding < 0 && ' (Payable)'}
                             </span>
@@ -483,9 +481,9 @@ export default function Reports() {
                             <span style={{
                               fontSize: 12,
                               fontWeight: 'bold',
-                              color: record.partyBalance > 0 ? '#52c41a' : record.partyBalance < 0 ? '#ff4d4f' : '#666',
+                              color: getAmountColor(record.partyBalance),
                             }}>
-                              {moneyFormatter({ amount: Math.abs(record.partyBalance), currency_code: record.currency })}
+                              {record.partyBalance > 0 ? '+' : record.partyBalance < 0 ? '-' : ''}{moneyFormatter({ amount: Math.abs(record.partyBalance), currency_code: record.currency })}
                               {record.partyBalance > 0 && ' (To Receive)'}
                               {record.partyBalance < 0 && ' (To Pay)'}
                             </span>
