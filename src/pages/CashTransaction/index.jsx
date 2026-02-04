@@ -54,6 +54,16 @@ export default function CashTransaction() {
     },
   ];
 
+  const readColumns = [
+    { title: translate('Type'), dataIndex: 'type' },
+    { title: translate('Amount'), dataIndex: 'amount' },
+    { title: translate('Date'), dataIndex: 'date', isDate: true },
+    { title: translate('Party Type'), dataIndex: 'partyType' },
+    { title: translate('Reference'), dataIndex: 'reference' },
+    { title: translate('Description'), dataIndex: 'description' },
+    { title: translate('Currency'), dataIndex: 'currency' },
+  ];
+
   const Labels = {
     PANEL_TITLE: translate('cash_management'),
     DATATABLE_TITLE: translate('cash_transaction_list'),
@@ -71,6 +81,7 @@ export default function CashTransaction() {
     searchConfig,
     deleteModalLabels,
     dataTableColumns,
+    readColumns,
   };
 
   return (

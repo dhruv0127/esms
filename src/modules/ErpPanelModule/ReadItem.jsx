@@ -247,6 +247,19 @@ export default function ReadItem({ config, selectedItem }) {
               margin: '0 32px',
             }}
           />
+          <Statistic
+            title={translate('Outstanding')}
+            value={moneyFormatter({
+              amount: (currentErp.total || 0) - (currentErp.credit || 0),
+              currency_code: currentErp.currency,
+            })}
+            valueStyle={{
+              color: ((currentErp.total || 0) - (currentErp.credit || 0)) > 0 ? '#cf1322' : '#3f8600',
+            }}
+            style={{
+              margin: '0 32px',
+            }}
+          />
         </Row>
       </PageHeader>
       <Divider dashed />
