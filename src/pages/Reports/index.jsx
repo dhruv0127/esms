@@ -1,5 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { DatePicker, Button, Card, Row, Col, Statistic, Table, Spin, Typography, Tag } from 'antd';
+import {
+  DatePicker,
+  Button,
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Table,
+  Spin,
+  Typography,
+  Tag,
+  Tabs,
+  Select,
+} from 'antd';
 import {
   FileTextOutlined,
   ShoppingCartOutlined,
@@ -14,9 +27,212 @@ import { useMoney, useDate } from '@/settings';
 import useLanguage from '@/locale/useLanguage';
 import useResponsive from '@/hooks/useResponsive';
 import { getAmountColor } from '@/utils/amountColor';
+import AutoCompleteAsync from '@/components/AutoCompleteAsync';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
+
+function PartyLedger() {
+  const translate = useLanguage();
+  const { moneyFormatter } = useMoney();
+  const { dateFormat } = useDate();
+  const { isMobile } = useResponsive();
+
+  const [partyType, setPartyType] = useState('client');
+  const [selectedParty, setSelectedParty] = useState(null);
+  const [dateRange, setDateRange] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [ledgerData, setLedgerData] = useState(null);
+
+  const handlePartyChange = (partyId, partyObj) => {
+    setSelectedParty(partyObj ? { _id: partyId, ...partyObj } : null);
+    setLedgerData(null);
+  };
+
+  const fetchLedger = async () => {
+    if (!selectedParty?._id) return;
+
+    setLoading(true);
+    try {
+      let query = `report/party-ledger?partyId=${selectedParty._id}&partyType=${partyType}`;
+      if (dateRange && dateRange.length === 2) {
+        query += `&startDate=${dateRange[0].format('YYYY-MM-DD')}&endDate=${dateRange[1].format('YYYY-MM-DD')}`;
+      }
+      const response = await request.get({ entity: query });
+      if (response.success) {
+        setLedgerData(response.result);
+      }
+    } catch (error) {
+      console.error('Error fetching party ledger:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ledgerColumns = [
+    {
+      title: translate('Date'),
+      dataIndex: 'date',
+      key: 'date',
+      render: (date) => dayjs(date).format(dateFormat),
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
+    },
+    {
+      title: translate('Description'),
+      dataIndex: 'description',
+      key: 'description',
+    },
+    {
+      title: translate('Credit'),
+      dataIndex: 'credit',
+      key: 'credit',
+      align: 'right',
+      render: (val) =>
+        val > 0 ? (
+          <span style={{ color: '#cf1322' }}>{moneyFormatter({ amount: val })}</span>
+        ) : (
+          '-'
+        ),
+    },
+    {
+      title: translate('Debit'),
+      dataIndex: 'debit',
+      key: 'debit',
+      align: 'right',
+      render: (val) =>
+        val > 0 ? (
+          <span style={{ color: '#389e0d' }}>{moneyFormatter({ amount: val })}</span>
+        ) : (
+          '-'
+        ),
+    },
+    {
+      title: translate('Outstanding'),
+      dataIndex: 'outstanding',
+      key: 'outstanding',
+      align: 'right',
+      render: (val) => (
+        <span style={{ color: getAmountColor(val > 0 ? -1 : 1), fontWeight: 'bold' }}>
+          {moneyFormatter({ amount: Math.abs(val) })}
+          {val > 0 ? ' (Due)' : val < 0 ? ' (Advance)' : ''}
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: isMobile ? '12px' : '24px' }}>
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={[12, 12]} align="middle">
+          <Col xs={24} sm={6}>
+            <Select
+              value={partyType}
+              onChange={(val) => {
+                setPartyType(val);
+                setSelectedParty(null);
+                setLedgerData(null);
+              }}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="client">Client</Select.Option>
+              <Select.Option value="supplier">Supplier</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={8}>
+            <AutoCompleteAsync
+              key={partyType}
+              entity={partyType}
+              displayLabels={['name']}
+              searchFields="name"
+              outputValue="_id"
+              onChange={handlePartyChange}
+            />
+          </Col>
+          <Col xs={24} sm={6}>
+            <RangePicker
+              value={dateRange}
+              onChange={setDateRange}
+              format={dateFormat}
+              style={{ width: '100%' }}
+              placeholder={['Start Date (optional)', 'End Date']}
+            />
+          </Col>
+          <Col xs={24} sm={4}>
+            <Button
+              type="primary"
+              onClick={fetchLedger}
+              loading={loading}
+              disabled={!selectedParty}
+              block
+            >
+              Generate
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <Spin size="large" />
+        </div>
+      )}
+
+      {!loading && ledgerData && (
+        <>
+          <Card
+            title={`Ledger: ${ledgerData.party?.name}`}
+            style={{ marginBottom: 16 }}
+          >
+            <Table
+              columns={ledgerColumns}
+              dataSource={ledgerData.rows}
+              rowKey={(_, idx) => idx}
+              pagination={{ pageSize: 20, showSizeChanger: true }}
+              scroll={{ x: 700 }}
+              size={isMobile ? 'small' : 'middle'}
+              summary={() => (
+                <Table.Summary.Row style={{ fontWeight: 'bold', background: '#fafafa' }}>
+                  <Table.Summary.Cell index={0} colSpan={2}>
+                    Total
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={2} align="right">
+                    <span style={{ color: '#cf1322' }}>
+                      {moneyFormatter({ amount: ledgerData.summary.totalCredit })}
+                    </span>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={3} align="right">
+                    <span style={{ color: '#389e0d' }}>
+                      {moneyFormatter({ amount: ledgerData.summary.totalDebit })}
+                    </span>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={4} align="right">
+                    <span
+                      style={{
+                        color: getAmountColor(ledgerData.summary.closingBalance > 0 ? -1 : 1),
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {moneyFormatter({ amount: Math.abs(ledgerData.summary.closingBalance) })}
+                      {ledgerData.summary.closingBalance > 0 ? ' (Due)' : ledgerData.summary.closingBalance < 0 ? ' (Advance)' : ''}
+                    </span>
+                  </Table.Summary.Cell>
+                </Table.Summary.Row>
+              )}
+            />
+          </Card>
+        </>
+      )}
+
+      {!loading && !ledgerData && (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <Title level={4}>Select a party and click Generate</Title>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
 
 export default function Reports() {
   const translate = useLanguage();
@@ -279,8 +495,8 @@ export default function Reports() {
     },
   ];
 
-  return (
-    <div>
+  const detailedReportContent = (
+    <>
       <PageHeader
         onBack={() => window.history.back()}
         title="Detailed Reports"
@@ -519,6 +735,27 @@ export default function Reports() {
           </Card>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <div>
+      <Tabs
+        defaultActiveKey="detailed"
+        style={{ padding: isMobile ? '0 12px' : '0 24px' }}
+        items={[
+          {
+            key: 'detailed',
+            label: 'Detailed Report',
+            children: detailedReportContent,
+          },
+          {
+            key: 'party-ledger',
+            label: 'Party Ledger',
+            children: <PartyLedger />,
+          },
+        ]}
+      />
     </div>
   );
 }

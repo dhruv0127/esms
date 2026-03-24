@@ -7,12 +7,16 @@ export default function Inventory() {
   const translate = useLanguage();
   const entity = 'inventory';
   const searchConfig = {
-    displayLabels: ['product'],
-    searchFields: 'product',
+    displayLabels: ['itemCode', 'product'],
+    searchFields: 'itemCode,product',
   };
   const deleteModalLabels = ['product'];
 
   const readColumns = [
+    {
+      title: translate('Item Code'),
+      dataIndex: 'itemCode',
+    },
     {
       title: translate('Product'),
       dataIndex: 'product',
@@ -28,6 +32,10 @@ export default function Inventory() {
   ];
 
   const dataTableColumns = [
+    {
+      title: translate('Item Code'),
+      dataIndex: 'itemCode',
+    },
     {
       title: translate('Product'),
       dataIndex: 'product',

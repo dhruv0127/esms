@@ -6,6 +6,13 @@ export default function InventoryForm() {
   return (
     <>
       <Form.Item
+        label="Item Code"
+        name="itemCode"
+      >
+        <Input placeholder="e.g. GM001" />
+      </Form.Item>
+
+      <Form.Item
         label="Product"
         name="product"
         rules={[
